@@ -13,8 +13,8 @@ export default function Gracias() {
           Tu empresa ya esta en MayorLink
         </h1>
         <p className="text-gray-500 text-lg mb-10">
-          Miles de comerciantes y revendedores van a poder encontrarte. 
-          Sos parte de los primeros proveedores fundadores de la plataforma.
+          Miles de comerciantes van a poder encontrarte.
+          Sos parte de los primeros proveedores fundadores.
         </p>
         <div className="flex gap-4 justify-center">
           
