@@ -11,6 +11,7 @@ const supabase = createClient(
 export default function PerfilProveedor() {
   const [proveedor, setProveedor] = useState<any>(null);
   const [productos, setProductos] = useState<any[]>([]);
+  const [resenas, setResenas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -24,16 +25,18 @@ export default function PerfilProveedor() {
           supabase.from("providers").update({ views_count: (data.views_count || 0) + 1 }).eq("slug", slug).then(() => {});
           supabase.from("products").select("*").eq("provider_slug", slug).eq("status", "active")
             .then(({ data: prods }) => setProductos(prods || []));
+          supabase.from("reviews").select("*").eq("provider_slug", slug).order("created_at", { ascending: false })
+            .then(({ data: revs }) => setResenas(revs || []));
         }
       });
   }, []);
 
+  const promedioRating = resenas.length > 0
+    ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
+    : null;
+
   if (cargando) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-gray-400 font-bold">Cargando...</div>
-      </div>
-    );
+    return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
   }
 
   if (!proveedor) {
@@ -74,9 +77,18 @@ export default function PerfilProveedor() {
               </div>
               <h1 className="text-3xl font-black mb-1">{proveedor.company_name}</h1>
               <p className="text-gray-400 text-sm mb-1">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
-              {proveedor.views_count > 0 && (
-                <p className="text-emerald-400 text-xs font-bold mb-4">{proveedor.views_count} personas vieron este perfil</p>
-              )}
+              <div className="flex items-center gap-4 mb-4">
+                {promedioRating && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-400 font-black">{promedioRating}</span>
+                    <span className="text-yellow-400">⭐</span>
+                    <span className="text-gray-400 text-xs">({resenas.length} resenas)</span>
+                  </div>
+                )}
+                {proveedor.views_count > 0 && (
+                  <span className="text-emerald-400 text-xs font-bold">{proveedor.views_count} visitas</span>
+                )}
+              </div>
               <div className="flex gap-3 flex-wrap">
                 {proveedor.whatsapp && (
                   <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
@@ -93,6 +105,9 @@ export default function PerfilProveedor() {
                     Email
                   </a>
                 )}
+                <a href={"/resena?proveedor=" + proveedor.slug} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-sm">
+                  Dejar resena
+                </a>
               </div>
             </div>
           </div>
@@ -183,6 +198,51 @@ export default function PerfilProveedor() {
             </div>
           </div>
         )}
+
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight">
+              Resenas
+              {promedioRating && <span className="ml-2 text-yellow-500">{promedioRating} ⭐</span>}
+              <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{resenas.length} resenas</span>
+            </h2>
+            <a href={"/resena?proveedor=" + proveedor.slug} className="text-emerald-600 text-sm font-bold hover:underline">
+              Dejar resena
+            </a>
+          </div>
+
+          {resenas.length === 0 ? (
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+              <p className="text-gray-400 font-bold mb-2">Todavia no hay resenas</p>
+              <p className="text-gray-400 text-sm mb-4">Se el primero en dejar una resena de este proveedor</p>
+              <a href={"/resena?proveedor=" + proveedor.slug} className="inline-block bg-emerald-500 text-black font-black px-6 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
+                Dejar resena
+              </a>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {resenas.map((r) => (
+                <div key={r.id} className="border-2 border-gray-100 rounded-2xl p-5">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="font-black text-black text-sm">{r.reviewer_name}</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[1,2,3,4,5].map((n) => (
+                          <span key={n} className={n <= r.rating ? "text-yellow-400" : "text-gray-200"}>⭐</span>
+                        ))}
+                        {r.is_verified && <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Verificada</span>}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {new Date(r.created_at).toLocaleDateString("es-AR")}
+                    </div>
+                  </div>
+                  {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <section className="bg-black px-6 py-12 text-center">
