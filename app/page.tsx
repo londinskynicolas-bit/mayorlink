@@ -1,143 +1,171 @@
 "use client";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { MayorlinkHeader } from "@/components/mayorlink-header";
-import { fetchCategories, type Category } from "@/lib/providers";
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Home() {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const [proveedores, setProveedores] = useState<any[]>([]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const data = await fetchCategories();
-        if (!cancelled) setCategories(data);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
+    supabase
+      .from("providers")
+      .select("*")
+      .eq("status", "active")
+      .limit(4)
+      .then(({ data }) => setProveedores(data || []));
   }, []);
 
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const term = query.trim();
-    if (!term) {
-      router.push("/busqueda");
-      return;
+  const buscar = () => {
+    if (busqueda.trim()) {
+      window.location.href = "/busqueda?q=" + encodeURIComponent(busqueda);
+    } else {
+      window.location.href = "/busqueda";
     }
-    router.push(`/busqueda?q=${encodeURIComponent(term)}`);
-  }
+  };
 
   return (
-    <div className="min-h-full bg-zinc-100">
-      <MayorlinkHeader />
+    <div className="min-h-screen bg-white">
+      <nav className="bg-black px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div>
+          <div className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Mayorista B2B</div>
+          <div className="text-2xl font-black text-white tracking-tight">MayorLink</div>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white">Buscar</a>
+          <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white">Explorar</a>
+          <a href="/registro" className="bg-emerald-500 text-black font-black text-sm px-5 py-2 rounded-full hover:bg-emerald-400 transition-colors">Publicar gratis</a>
+        </div>
+      </nav>
 
-      <section className="bg-black px-4 py-14 text-white sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-4xl">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-400">
-            Venta mayorista B2B en Argentina
+      <section className="bg-black text-white px-6 py-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-4">Venta mayorista B2B en Argentina</div>
+          <h1 className="text-6xl font-black leading-none mb-4 tracking-tight">
+            Encontra proveedores<br />
+            <span className="text-emerald-400">mayoristas</span><br />
+            en todo el pais
+          </h1>
+          <p className="text-gray-400 text-lg mb-10 max-w-xl">
+            Busca por producto, rubro o provincia. Compara condiciones y contacta directo por WhatsApp.
           </p>
-          <h2 className="mt-4 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-            Encontra proveedores mayoristas como en un marketplace
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg font-semibold text-zinc-300">
-            Busca por producto, rubro o provincia. Compara condiciones y
-            contacta directo por WhatsApp.
-          </p>
-
-          <form onSubmit={handleSearch} className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="flex gap-0 max-w-2xl bg-white rounded-xl overflow-hidden">
             <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Que producto o rubro buscas?"
-              className="flex-1 rounded-md border-0 px-4 py-4 text-lg font-bold text-black outline-none ring-4 ring-emerald-600/40 focus:ring-emerald-500"
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && buscar()}
+              placeholder="Que producto buscas? Ej: indumentaria, electronica..."
+              className="flex-1 px-5 py-4 text-gray-900 text-sm focus:outline-none"
             />
-            <button
-              type="submit"
-              className="rounded-md bg-emerald-500 px-8 py-4 text-lg font-black text-black hover:bg-emerald-400"
-            >
+            <button onClick={buscar} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 text-sm transition-colors">
               Buscar
             </button>
-          </form>
+          </div>
+          <div className="flex gap-3 mt-4">
+            {["indumentaria", "electronica", "cosmetica", "ferreteria", "calzado"].map((t) => (
+              <button key={t} onClick={() => { setBusqueda(t); window.location.href = "/busqueda?q=" + t; }} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors underline">
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="flex items-end justify-between gap-4">
-          <h3 className="text-2xl font-black text-black">Categorias</h3>
-          <Link
-            href="/busqueda"
-            className="text-sm font-black text-emerald-700 hover:underline"
-          >
-            Ver todos
-          </Link>
+      <section className="bg-emerald-500 px-6 py-5">
+        <div className="max-w-4xl mx-auto grid grid-cols-4 gap-4">
+          {[
+            { num: "10.000+", label: "Proveedores" },
+            { num: "50.000+", label: "Compradores" },
+            { num: "20", label: "Categorias" },
+            { num: "100%", label: "Gratis para buscar" },
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-2xl font-black text-black">{s.num}</div>
+              <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">{s.label}</div>
+            </div>
+          ))}
         </div>
+      </section>
 
-        {loading ? (
-          <p className="mt-8 font-bold text-zinc-600">Cargando categorias...</p>
-        ) : (
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.map((category) => (
-              <li key={category.id}>
-                <Link
-                  href={`/busqueda?categoria=${encodeURIComponent(category.slug)}`}
-                  className="flex h-full flex-col rounded-lg border-2 border-zinc-200 bg-white p-5 shadow-sm transition hover:border-emerald-600 hover:shadow-md"
-                >
-                  {category.emoji ? (
-                    <span className="text-3xl">{category.emoji}</span>
-                  ) : (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-100 text-lg font-black text-emerald-800">
-                      {category.name.charAt(0)}
-                    </span>
-                  )}
-                  <span className="mt-3 text-lg font-black text-black">
-                    {category.name}
-                  </span>
-                  <span className="mt-2 text-sm font-bold text-emerald-700">
-                    Ver proveedores
-                  </span>
-                </Link>
-              </li>
+      <section className="bg-gray-50 px-6 py-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-black text-black uppercase tracking-tight mb-6">Categorias</h2>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { nombre: "Indumentaria", emoji: "👕" },
+              { nombre: "Electronica", emoji: "📱" },
+              { nombre: "Alimentos", emoji: "🥗" },
+              { nombre: "Ferreteria", emoji: "🔧" },
+              { nombre: "Cosmetica", emoji: "💄" },
+              { nombre: "Hogar", emoji: "🛋️" },
+              { nombre: "Deportes", emoji: "⚽" },
+              { nombre: "Calzado", emoji: "👟" },
+            ].map((cat) => (
+              <a key={cat.nombre} href={"/busqueda?q=" + cat.nombre} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
+                <div className="text-3xl mb-2">{cat.emoji}</div>
+                <div className="text-sm font-black text-black">{cat.nombre}</div>
+                <div className="text-xs text-emerald-600 font-bold mt-1">Ver proveedores</div>
+              </a>
             ))}
-          </ul>
-        )}
-
-        <section className="mt-14 rounded-lg border-2 border-black bg-white p-8">
-          <h3 className="text-2xl font-black text-black">
-            Para compradores mayoristas
-          </h3>
-          <ul className="mt-4 space-y-2 text-base font-semibold text-zinc-700">
-            <li>Filtra por categoria, provincia y pedido minimo.</li>
-            <li>Ordena resultados por relevancia.</li>
-            <li>Accede al perfil completo de cada proveedor.</li>
-          </ul>
-          <Link
-            href="/busqueda"
-            className="mt-6 inline-block rounded-md bg-black px-6 py-3 font-black text-white hover:bg-zinc-800"
-          >
-            Explorar directorio
-          </Link>
-        </section>
-      </main>
-
-      <footer className="border-t-2 border-black bg-white py-8">
-        <div className="mx-auto max-w-6xl px-4 text-center text-sm font-bold text-zinc-600 sm:px-6">
-          MayorLink - Directorio mayorista B2B de Argentina
+          </div>
         </div>
-      </footer>
+      </section>
+
+      <section className="px-6 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-black text-black uppercase tracking-tight">Proveedores destacados</h2>
+            <a href="/busqueda" className="text-emerald-600 text-sm font-black hover:underline">Ver todos</a>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {proveedores.map((p) => (
+              <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-base font-black text-emerald-700">
+                      {p.company_name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-black text-black text-sm">{p.company_name}</div>
+                      <div className="text-xs text-gray-400">{p.city ? p.city + ", " : ""}{p.province}</div>
+                    </div>
+                  </div>
+                  {p.is_founder && <span className="text-xs bg-amber-100 text-amber-700 font-black px-2 py-1 rounded-full">Fundador</span>}
+                </div>
+                {p.min_order && (
+                  <div className="text-xs mb-3">
+                    Pedido minimo: <span className="font-black text-emerald-600">{p.min_order}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {p.whatsapp && (
+                    <a href={"https://wa.me/" + p.whatsapp} target="_blank" className="flex-1 bg-emerald-500 text-black font-black text-xs py-2 rounded-xl text-center hover:bg-emerald-400 transition-colors">
+                      WhatsApp
+                    </a>
+                  )}
+                  <a href={"/proveedores/" + p.slug} className="flex-1 border-2 border-black text-black font-black text-xs py-2 rounded-xl text-center hover:bg-black hover:text-white transition-colors">
+                    Ver perfil
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-black px-6 py-16 text-center">
+        <h2 className="text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
+        <p className="text-gray-400 mb-8 max-w-md mx-auto">Publica tu empresa gratis y empieza a recibir consultas de comerciantes de todo el pais</p>
+        <a href="/registro" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
+          Publicar mi empresa gratis
+        </a>
+        <p className="text-gray-600 text-xs mt-4">Los primeros 100 proveedores obtienen el badge de Fundador permanente</p>
+      </section>
     </div>
   );
 }

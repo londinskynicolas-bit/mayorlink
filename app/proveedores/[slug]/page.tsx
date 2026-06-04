@@ -1,164 +1,123 @@
-import Link from "next/link";
+import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import { MayorlinkHeader } from "@/components/mayorlink-header";
-import { ProviderAvatar } from "@/components/provider-avatar";
-import { ProviderBadges } from "@/components/provider-badges";
-import { fetchProviderBySlug, whatsappUrl } from "@/lib/providers";
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-};
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-export default async function ProveedorPage({ params }: PageProps) {
-  const { slug } = await params;
-  const provider = await fetchProviderBySlug(slug);
+export default async function PerfilProveedor({ params }: { params: { slug: string } }) {
+  const { data: proveedor } = await supabase
+    .from("providers")
+    .select("*")
+    .eq("slug", params.slug)
+    .single();
 
-  if (!provider) {
-    notFound();
-  }
-
-  const galleryItems =
-    provider.images.length > 0
-      ? provider.images
-      : [null, null, null, null];
+  if (!proveedor) return notFound();
 
   return (
-    <div className="min-h-full bg-zinc-100">
-      <MayorlinkHeader compact />
+    <div className="min-h-screen bg-white">
+      <nav className="bg-black px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div>
+          <div className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Mayorista B2B</div>
+          <a href="/" className="text-2xl font-black text-white tracking-tight block">MayorLink</a>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white">Explorar</a>
+          <a href="/registro" className="bg-emerald-500 text-black font-black text-sm px-5 py-2 rounded-full hover:bg-emerald-400 transition-colors">Publicar gratis</a>
+        </div>
+      </nav>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <Link
-          href="/busqueda"
-          className="text-sm font-black text-emerald-700 hover:underline"
-        >
-          Volver a resultados
-        </Link>
-
-        <section className="mt-4 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="bg-black px-6 py-8 text-white sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-              <ProviderAvatar
-                name={provider.name}
-                logoUrl={provider.logoUrl}
-                size="lg"
-              />
-              <div className="min-w-0 flex-1">
-                <ProviderBadges
-                  isVerified={provider.isVerified}
-                  isFounder={provider.isFounder}
-                />
-                <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-                  {provider.name}
-                </h1>
-                <p className="mt-2 text-base font-bold text-emerald-300">
-                  {provider.category} | {provider.city}, {provider.province}
-                </p>
+      <div className="bg-black text-white px-6 py-10">
+        <div className="max-w-4xl mx-auto">
+          <a href="/busqueda" className="text-emerald-400 text-sm font-bold hover:underline block mb-6">Volver a resultados</a>
+          <div className="flex items-start gap-6">
+            <div className="w-20 h-20 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl font-black text-black flex-shrink-0">
+              {proveedor.company_name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {proveedor.is_verified && <span className="text-xs bg-emerald-500 text-black font-black px-3 py-1 rounded-full">Verificado</span>}
+                {proveedor.is_founder && <span className="text-xs bg-white text-black font-black px-3 py-1 rounded-full">Fundador</span>}
+              </div>
+              <h1 className="text-3xl font-black mb-1">{proveedor.company_name}</h1>
+              <p className="text-gray-400 text-sm mb-4">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
+              <div className="flex gap-3 flex-wrap">
+                {proveedor.whatsapp && (
+                  <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
+                    Contactar por WhatsApp
+                  </a>
+                )}
+                {proveedor.instagram && (
+                  <a href={"https://instagram.com/" + proveedor.instagram} target="_blank" className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-white transition-colors text-sm">
+                    Instagram
+                  </a>
+                )}
+                {proveedor.email && (
+                  <a href={"mailto:" + proveedor.email} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-white transition-colors text-sm">
+                    Email
+                  </a>
+                )}
               </div>
             </div>
-
-            {provider.phone && (
-              <a
-                href={whatsappUrl(
-                  provider.phone,
-                  `Hola ${provider.name}, quiero consultar por compra mayorista desde MayorLink.`
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 flex w-full items-center justify-center rounded-lg bg-emerald-500 px-6 py-4 text-lg font-black text-white hover:bg-emerald-400 sm:max-w-md"
-              >
-                Contactar por WhatsApp
-              </a>
+            {proveedor.views_count > 0 && (
+              <div className="text-right">
+                <div className="text-3xl font-black text-emerald-400">{proveedor.views_count}</div>
+                <div className="text-xs text-gray-400 font-bold uppercase tracking-wide">visitas este mes</div>
+              </div>
             )}
           </div>
+        </div>
+      </div>
 
-          <div className="p-6 sm:p-8">
-            <h2 className="text-lg font-black text-black">Galeria</h2>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {galleryItems.map((image, index) => (
-                <div
-                  key={`gallery-${index}`}
-                  className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50"
-                >
-                  {image ? (
-                    <img
-                      src={image}
-                      alt={`${provider.name} ${index + 1}`}
-                      className="h-full w-full rounded-lg object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-bold uppercase text-zinc-400">
-                      Foto {index + 1}
-                    </span>
-                  )}
-                </div>
-              ))}
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-3 gap-6 mb-10">
+          {proveedor.min_order && (
+            <div className="border-2 border-gray-100 rounded-2xl p-5">
+              <div className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">Pedido minimo</div>
+              <div className="text-xl font-black text-emerald-600">{proveedor.min_order}</div>
             </div>
+          )}
+          {proveedor.payment_methods && (
+            <div className="border-2 border-gray-100 rounded-2xl p-5">
+              <div className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">Formas de pago</div>
+              <div className="text-sm font-bold text-black">{proveedor.payment_methods}</div>
+            </div>
+          )}
+          {proveedor.shipping_info && (
+            <div className="border-2 border-gray-100 rounded-2xl p-5">
+              <div className="text-xs font-black text-gray-400 uppercase tracking-wide mb-1">Envios</div>
+              <div className="text-sm font-bold text-black">{proveedor.shipping_info}</div>
+            </div>
+          )}
+        </div>
 
-            <h2 className="mt-8 text-lg font-black text-black">Descripcion</h2>
-            <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-zinc-700">
-              {provider.description || "Sin descripcion disponible."}
-            </p>
-
-            <h2 className="mt-8 text-lg font-black text-black">
-              Condiciones de compra
-            </h2>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border-2 border-zinc-200 p-4">
-                <dt className="text-xs font-black uppercase text-zinc-500">
-                  Pedido minimo
-                </dt>
-                <dd className="mt-2 text-lg font-black text-black">
-                  {provider.minOrder || "Consultar"}
-                </dd>
-              </div>
-              <div className="rounded-lg border-2 border-zinc-200 p-4">
-                <dt className="text-xs font-black uppercase text-zinc-500">
-                  Formas de pago
-                </dt>
-                <dd className="mt-2 text-sm font-bold text-zinc-800">
-                  {provider.paymentMethods.length > 0
-                    ? provider.paymentMethods.join(", ")
-                    : "Consultar"}
-                </dd>
-              </div>
-              <div className="rounded-lg border-2 border-zinc-200 p-4">
-                <dt className="text-xs font-black uppercase text-zinc-500">
-                  Envios
-                </dt>
-                <dd className="mt-2 text-sm font-bold text-zinc-800">
-                  {provider.delivery || "Consultar"}
-                </dd>
-              </div>
-            </dl>
-
-            <h2 className="mt-8 text-lg font-black text-black">Contacto</h2>
-            <ul className="mt-4 space-y-2 text-sm font-semibold text-zinc-800">
-              <li>
-                <span className="font-black text-black">WhatsApp: </span>
-                {provider.phone || "No disponible"}
-              </li>
-              <li>
-                <span className="font-black text-black">Email: </span>
-                {provider.email || "No disponible"}
-              </li>
-              {provider.instagram && (
-                <li>
-                  <span className="font-black text-black">Instagram: </span>
-                  @{provider.instagram.replace(/^@/, "")}
-                </li>
-              )}
-              <li>
-                <span className="font-black text-black">Ubicacion: </span>
-                {provider.city}, {provider.province}
-              </li>
-              <li>
-                <span className="font-black text-black">Categoria: </span>
-                {provider.category}
-              </li>
-            </ul>
+        {proveedor.description && (
+          <div className="mb-10">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight mb-3">Sobre la empresa</h2>
+            <p className="text-gray-600 leading-relaxed">{proveedor.description}</p>
           </div>
-        </section>
-      </main>
+        )}
+
+        <div className="mb-10">
+          <h2 className="text-lg font-black text-black uppercase tracking-tight mb-4">Galeria</h2>
+          <div className="grid grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                <span className="text-xs text-gray-400 font-bold">FOTO {n}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <section className="bg-black px-6 py-12 text-center">
+        <h2 className="text-2xl font-black text-white mb-2">Sos proveedor mayorista?</h2>
+        <p className="text-gray-400 text-sm mb-6">Publica tu empresa gratis y llega a miles de comerciantes</p>
+        <a href="/registro" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-2xl transition-colors">
+          Publicar mi empresa gratis
+        </a>
+      </section>
     </div>
   );
 }
