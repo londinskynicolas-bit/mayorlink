@@ -1,19 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
-import { notFound } from "next/navigation";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function PerfilProveedor({ params }: { params: { slug: string } }) {
+export default async function PerfilProveedor({ params }: any) {
+  const slug = params.slug;
+
   const { data: proveedor } = await supabase
     .from("providers")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
-  if (!proveedor) return notFound();
+  if (!proveedor) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-black text-black mb-4">Proveedor no encontrado</h1>
+          <a href="/busqueda" className="bg-emerald-500 text-black font-black px-6 py-3 rounded-xl">Ir a busqueda</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
