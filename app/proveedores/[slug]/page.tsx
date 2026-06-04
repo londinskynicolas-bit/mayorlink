@@ -10,6 +10,7 @@ const supabase = createClient(
 
 export default function PerfilProveedor() {
   const [proveedor, setProveedor] = useState<any>(null);
+  const [productos, setProductos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,12 @@ export default function PerfilProveedor() {
             .update({ views_count: (data.views_count || 0) + 1 })
             .eq("slug", slug)
             .then(() => {});
+          supabase
+            .from("products")
+            .select("*")
+            .eq("provider_slug", slug)
+            .eq("status", "active")
+            .then(({ data: prods }) => setProductos(prods || []));
         }
       });
   }, []);
@@ -127,22 +134,59 @@ export default function PerfilProveedor() {
           </div>
         )}
 
-        <div className="mb-10">
-          <h2 className="text-lg font-black text-black uppercase tracking-tight mb-4">Galeria</h2>
-          <div className="grid grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                <span className="text-xs text-gray-400 font-bold">FOTO {n}</span>
-              </div>
-            ))}
+        {productos.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight mb-6">
+              Catalogo de productos
+              <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{productos.length} productos</span>
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              {productos.map((p) => (
+                <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
+                  <div className="aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-200">
+                    <span className="text-xs text-gray-400 font-bold">📦 {p.name}</span>
+                  </div>
+                  <h3 className="font-black text-black mb-1">{p.name}</h3>
+                  {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Unidad: {p.price_unit}</span>}
+                    {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
+                    {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
+                  </div>
+                  <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
+                    {p.material && <span>Material: {p.material}</span>}
+                    {p.measures && <span>· Talles: {p.measures}</span>}
+                    {p.stock && <span>· Stock: {p.stock}</span>}
+                  </div>
+                  {proveedor.whatsapp && (
+                    <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name} target="_blank" className="mt-4 block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
+                      Consultar por WhatsApp
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {productos.length === 0 && (
+          <div className="mb-10">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight mb-4">Galeria</h2>
+            <div className="grid grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                  <span className="text-xs text-gray-400 font-bold">FOTO {n}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <section className="bg-black px-6 py-12 text-center">
         <h2 className="text-2xl font-black text-white mb-2">Sos proveedor mayorista?</h2>
         <p className="text-gray-400 text-sm mb-6">Publica tu empresa gratis y llega a miles de comerciantes</p>
-        <a href="/registro" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-2xl transition-colors">
+        <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-2xl transition-colors">
           Publicar mi empresa gratis
         </a>
       </section>
