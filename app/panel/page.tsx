@@ -11,6 +11,8 @@ const supabase = createClient(
 export default function Panel() {
   const { data: session, status } = useSession();
   const [proveedor, setProveedor] = useState<any>(null);
+  const [productos, setProductos] = useState<any[]>([]);
+  const [resenas, setResenas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [subiendoLogo, setSubiendoLogo] = useState(false);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -19,7 +21,16 @@ export default function Panel() {
     if (status === "unauthenticated") window.location.href = "/login";
     if (status === "authenticated" && session?.user?.email) {
       supabase.from("providers").select("*").eq("email", session.user.email).single()
-        .then(({ data }) => { setProveedor(data); setCargando(false); });
+        .then(({ data }) => {
+          setProveedor(data);
+          setCargando(false);
+          if (data) {
+            supabase.from("products").select("id").eq("provider_slug", data.slug)
+              .then(({ data: prods }) => setProductos(prods || []));
+            supabase.from("reviews").select("rating").eq("provider_slug", data.slug)
+              .then(({ data: revs }) => setResenas(revs || []));
+          }
+        });
     }
   }, [status, session]);
 
@@ -37,6 +48,10 @@ export default function Panel() {
     }
     setSubiendoLogo(false);
   };
+
+  const promedioRating = resenas.length > 0
+    ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
+    : null;
 
   if (status === "loading" || cargando) {
     return <div className="min-h-screen bg-black flex items-center justify-center"><div className="text-white font-bold">Cargando...</div></div>;
@@ -69,72 +84,94 @@ export default function Panel() {
           </div>
         ) : (
           <div>
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 text-center">
-                <div className="text-4xl font-black text-emerald-500">{proveedor.views_count || 0}</div>
-                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Visitas al perfil</div>
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+                <div className="text-3xl font-black text-emerald-500">{proveedor.views_count || 0}</div>
+                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Visitas</div>
               </div>
-              <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 text-center">
-                <div className="text-4xl font-black text-black">{proveedor.profile_score || 0}%</div>
-                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Perfil completado</div>
+              <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+                <div className="text-3xl font-black text-black">{productos.length}</div>
+                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Productos</div>
               </div>
-              <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 text-center">
-                <div className="text-2xl font-black text-amber-500">{proveedor.is_founder ? "Fundador" : "Activo"}</div>
-                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Estado</div>
+              <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+                <div className="text-3xl font-black text-yellow-500">{promedioRating ? promedioRating + "⭐" : "-"}</div>
+                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">{resenas.length} resenas</div>
+              </div>
+              <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+                <div className="text-3xl font-black text-black">{proveedor.profile_score || 0}%</div>
+                <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Perfil completo</div>
               </div>
             </div>
 
-            <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-4">
+            {proveedor.profile_score < 80 && (
+              <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6">
+                <p className="text-amber-800 font-black text-sm mb-1">Tu perfil esta incompleto</p>
+                <p className="text-amber-600 text-xs">Los perfiles completos reciben 3x mas consultas. Completalo para aparecer primero en los resultados.</p>
+                <a href="/editar-perfil" className="inline-block mt-3 bg-amber-500 text-white font-black px-4 py-2 rounded-xl text-xs hover:bg-amber-400 transition-colors">
+                  Completar perfil
+                </a>
+              </div>
+            )}
+
+            <div className="bg-white border-2 border-gray-100 rounded-2xl p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-black text-black uppercase tracking-tight">Tu perfil</h2>
+                <h2 className="text-lg font-black text-black uppercase tracking-tight">Tu empresa</h2>
                 <a href={"/proveedores/" + proveedor.slug} target="_blank" className="text-emerald-600 text-sm font-bold hover:underline">Ver perfil publico</a>
               </div>
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  {proveedor.logo_url ? (
-                    <img src={proveedor.logo_url} alt="logo" className="w-16 h-16 rounded-xl object-cover border-2 border-gray-100"/>
-                  ) : (
-                    <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center text-xl font-black text-emerald-700">
-                      {proveedor.company_name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-100">
+                    {proveedor.logo_url ? (
+                      <img src={proveedor.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                    ) : (
+                      <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-xl font-black text-emerald-700">
+                        {proveedor.company_name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <button onClick={() => logoRef.current?.click()} disabled={subiendoLogo} className="absolute -bottom-2 -right-2 w-7 h-7 bg-black text-white rounded-full text-xs flex items-center justify-center hover:bg-emerald-600 transition-colors">
                     {subiendoLogo ? "..." : "+"}
                   </button>
                   <input ref={logoRef} type="file" accept="image/*" onChange={subirLogo} className="hidden"/>
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="font-black text-black text-lg">{proveedor.company_name}</div>
                   <div className="text-sm text-gray-400">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</div>
-                  <div className="text-sm text-gray-400">{proveedor.email}</div>
+                  {proveedor.is_founder && <span className="text-xs bg-amber-100 text-amber-700 font-black px-2 py-1 rounded-full">Fundador</span>}
+                  {proveedor.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-2 py-1 rounded-full ml-1">Verificado</span>}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <a href="/mis-productos" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
                 <div className="text-3xl mb-2">📦</div>
-                <div className="font-black text-black">Mis productos</div>
-                <div className="text-xs text-gray-400 mt-1">Gestioná tu catalogo</div>
+                <div className="font-black text-black text-sm">Mis productos</div>
+                <div className="text-xs text-gray-400 mt-1">{productos.length} publicados</div>
               </a>
-              <a href={"/proveedores/" + proveedor.slug} target="_blank" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
-                <div className="text-3xl mb-2">👁</div>
-                <div className="font-black text-black">Ver mi perfil</div>
-                <div className="text-xs text-gray-400 mt-1">Como lo ven los compradores</div>
+              <a href="/editar-perfil" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
+                <div className="text-3xl mb-2">✏️</div>
+                <div className="font-black text-black text-sm">Editar perfil</div>
+                <div className="text-xs text-gray-400 mt-1">{proveedor.profile_score || 0}% completo</div>
+              </a>
+              <a href="/solicitudes" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
+                <div className="text-3xl mb-2">📋</div>
+                <div className="font-black text-black text-sm">Solicitudes</div>
+                <div className="text-xs text-gray-400 mt-1">Ver oportunidades</div>
               </a>
             </div>
 
             <div className="flex gap-3">
-              <a href="/registro-proveedor" className="border-2 border-black text-black font-black px-6 py-3 rounded-xl hover:bg-black hover:text-white transition-colors text-sm">
-                Editar informacion
-              </a>
               <button onClick={() => {
                 const url = window.location.origin + "/proveedores/" + proveedor.slug;
                 navigator.clipboard.writeText(url);
                 alert("Link copiado: " + url);
-              }} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
+              }} className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm text-center">
                 Copiar link de mi perfil
               </button>
+              <a href={"/proveedores/" + proveedor.slug} target="_blank" className="flex-1 border-2 border-black text-black font-black px-6 py-3 rounded-xl hover:bg-black hover:text-white transition-colors text-sm text-center">
+                Ver mi perfil
+              </a>
             </div>
           </div>
         )}
