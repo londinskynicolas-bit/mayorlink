@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -5,14 +7,30 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function PerfilProveedor({ params }: any) {
-  const slug = params.slug;
+export default function PerfilProveedor({ params }: any) {
+  const [proveedor, setProveedor] = useState<any>(null);
+  const [cargando, setCargando] = useState(true);
 
-  const { data: proveedor } = await supabase
-    .from("providers")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  useEffect(() => {
+    const slug = params.slug;
+    supabase
+      .from("providers")
+      .select("*")
+      .eq("slug", slug)
+      .single()
+      .then(({ data }) => {
+        setProveedor(data);
+        setCargando(false);
+      });
+  }, [params.slug]);
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-400 font-bold">Cargando...</div>
+      </div>
+    );
+  }
 
   if (!proveedor) {
     return (
