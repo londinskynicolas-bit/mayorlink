@@ -1,18 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useParams } from "next/navigation";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function PerfilProveedor({ params }: any) {
+export default function PerfilProveedor() {
+  const params = useParams();
   const [proveedor, setProveedor] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const slug = params.slug;
+    const slug = params.slug as string;
+    if (!slug) return;
     supabase
       .from("providers")
       .select("*")
