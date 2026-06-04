@@ -24,11 +24,9 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <button onClick={() => signIn("google")} className="text-gray-300 text-sm font-medium hover:text-white">
-              Iniciar sesion
-            </button>
-            <a href="/registro" className="bg-emerald-500 text-black font-black text-sm px-5 py-2 rounded-full hover:bg-emerald-400 transition-colors">
-              Publicar gratis
+            <a href="/bienvenida" className="text-gray-300 text-sm font-medium hover:text-white">Iniciar sesion</a>
+            <a href="/bienvenida" className="bg-emerald-500 text-black font-black text-sm px-5 py-2 rounded-full hover:bg-emerald-400 transition-colors">
+              Registrarse
             </a>
           </div>
         )}
