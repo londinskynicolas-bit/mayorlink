@@ -10,16 +10,27 @@ const supabase = createClient(
 );
 
 const CATEGORIAS = [
-  "Todas", "Indumentaria", "Calzado", "Electronica", "Alimentos",
-  "Bebidas", "Ferreteria", "Cosmetica", "Hogar", "Deportes",
-  "Juguetes", "Tecnologia", "Textil", "Otros"
+  { label: "Todas", value: "todas" },
+  { label: "Indumentaria", value: "indumentaria" },
+  { label: "Calzado", value: "calzado" },
+  { label: "Electronica", value: "electronica" },
+  { label: "Alimentos", value: "alimentos" },
+  { label: "Bebidas", value: "bebidas" },
+  { label: "Ferreteria", value: "ferreteria" },
+  { label: "Cosmetica", value: "cosmetica" },
+  { label: "Hogar", value: "hogar" },
+  { label: "Deportes", value: "deportes" },
+  { label: "Juguetes", value: "juguetes" },
+  { label: "Tecnologia", value: "tecnologia" },
+  { label: "Textil", value: "textil" },
+  { label: "Otros", value: "otros" },
 ];
 
 export default function Solicitudes() {
   const { data: session } = useSession();
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [publicado, setPublicado] = useState(false);
@@ -36,7 +47,7 @@ export default function Solicitudes() {
   const cargarSolicitudes = async () => {
     setCargando(true);
     let query = supabase.from("requests").select("*").eq("status", "active").order("created_at", { ascending: false });
-    if (categoriaFiltro !== "Todas") query = query.eq("category", categoriaFiltro);
+    if (categoriaFiltro !== "todas") query = query.eq("category", categoriaFiltro);
     const { data } = await query;
     setSolicitudes(data || []);
     setCargando(false);
@@ -45,7 +56,7 @@ export default function Solicitudes() {
   const actualizar = (campo: string, valor: string) => {
     setForm((prev) => ({ ...prev, [campo]: valor }));
     if (campo === "category" && valor !== "") {
-      buscarProveedoresMatch(valor);
+      buscarProveedoresMatch(valor.toLowerCase());
     }
   };
 
@@ -68,7 +79,7 @@ export default function Solicitudes() {
       buyer_name: session?.user?.name || "Comprador",
       title: form.title,
       description: form.description,
-      category: form.category,
+      category: form.category.toLowerCase(),
       quantity: form.quantity,
       city: form.city,
       province: form.province,
@@ -127,7 +138,9 @@ export default function Solicitudes() {
                   <label className="text-sm font-bold text-gray-700 block mb-1">Categoria *</label>
                   <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black">
                     <option value="">Seleccionar...</option>
-                    {CATEGORIAS.filter(c => c !== "Todas").map(c => <option key={c}>{c}</option>)}
+                    {CATEGORIAS.filter(c => c.value !== "todas").map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -227,8 +240,8 @@ export default function Solicitudes() {
 
         <div className="flex gap-2 flex-wrap mb-6">
           {CATEGORIAS.map((cat) => (
-            <button key={cat} onClick={() => setCategoriaFiltro(cat)} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${categoriaFiltro === cat ? "bg-black text-white" : "bg-white border-2 border-gray-200 text-gray-600 hover:border-black"}`}>
-              {cat}
+            <button key={cat.value} onClick={() => setCategoriaFiltro(cat.value)} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${categoriaFiltro === cat.value ? "bg-black text-white" : "bg-white border-2 border-gray-200 text-gray-600 hover:border-black"}`}>
+              {cat.label}
             </button>
           ))}
         </div>
@@ -251,7 +264,7 @@ export default function Solicitudes() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-3 py-1 rounded-full">{s.category}</span>
+                      <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-3 py-1 rounded-full capitalize">{s.category}</span>
                       {s.required_date && <span className="text-xs bg-red-100 text-red-700 font-black px-3 py-1 rounded-full">Fecha: {s.required_date}</span>}
                     </div>
                     <h3 className="text-lg font-black text-black mb-1">{s.title}</h3>
