@@ -22,6 +22,13 @@ export default function PerfilProveedor() {
       .then(({ data }) => {
         setProveedor(data);
         setCargando(false);
+        if (data) {
+          supabase
+            .from("providers")
+            .update({ views_count: (data.views_count || 0) + 1 })
+            .eq("slug", slug)
+            .then(() => {});
+        }
       });
   }, []);
 
@@ -70,7 +77,10 @@ export default function PerfilProveedor() {
                 {proveedor.is_founder && <span className="text-xs bg-white text-black font-black px-3 py-1 rounded-full">Fundador</span>}
               </div>
               <h1 className="text-3xl font-black mb-1">{proveedor.company_name}</h1>
-              <p className="text-gray-400 text-sm mb-4">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
+              <p className="text-gray-400 text-sm mb-1">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
+              {proveedor.views_count > 0 && (
+                <p className="text-emerald-400 text-xs font-bold mb-4">{proveedor.views_count} personas vieron este perfil</p>
+              )}
               <div className="flex gap-3 flex-wrap">
                 {proveedor.whatsapp && (
                   <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
@@ -89,12 +99,6 @@ export default function PerfilProveedor() {
                 )}
               </div>
             </div>
-            {proveedor.views_count > 0 && (
-              <div className="text-right">
-                <div className="text-3xl font-black text-emerald-400">{proveedor.views_count}</div>
-                <div className="text-xs text-gray-400 font-bold uppercase tracking-wide">visitas este mes</div>
-              </div>
-            )}
           </div>
         </div>
       </div>
