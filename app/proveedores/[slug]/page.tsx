@@ -13,6 +13,7 @@ export default function PerfilProveedor() {
   const [productos, setProductos] = useState<any[]>([]);
   const [resenas, setResenas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [fotoActiva, setFotoActiva] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
     const slug = window.location.pathname.split("/").pop();
@@ -35,9 +36,7 @@ export default function PerfilProveedor() {
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
     : null;
 
-  if (cargando) {
-    return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
-  }
+  if (cargando) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
 
   if (!proveedor) {
     return (
@@ -74,6 +73,7 @@ export default function PerfilProveedor() {
               <div className="flex items-center gap-2 mb-2">
                 {proveedor.is_verified && <span className="text-xs bg-emerald-500 text-black font-black px-3 py-1 rounded-full">Verificado</span>}
                 {proveedor.is_founder && <span className="text-xs bg-white text-black font-black px-3 py-1 rounded-full">Fundador</span>}
+                {proveedor.category && <span className="text-xs bg-gray-700 text-gray-200 font-bold px-3 py-1 rounded-full">{proveedor.category}</span>}
               </div>
               <h1 className="text-3xl font-black mb-1">{proveedor.company_name}</h1>
               <p className="text-gray-400 text-sm mb-1">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
@@ -153,7 +153,40 @@ export default function PerfilProveedor() {
               {productos.map((p) => (
                 <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
                   {p.images && p.images.length > 0 ? (
-                    <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover"/>
+                    <div className="relative">
+                      <img
+                        src={p.images[fotoActiva[p.id] || 0]}
+                        alt={p.name}
+                        className="w-full aspect-video object-cover"
+                      />
+                      {p.images.length > 1 && (
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                          {p.images.map((_: string, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))}
+                              className={`w-2 h-2 rounded-full transition-all ${(fotoActiva[p.id] || 0) === i ? "bg-white scale-125" : "bg-white opacity-50"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {p.images.length > 1 && (
+                        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
+                          <button
+                            onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))}
+                            className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80 transition-all"
+                          >
+                            &lt;
+                          </button>
+                          <button
+                            onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.min(p.images.length - 1, (prev[p.id] || 0) + 1) }))}
+                            className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80 transition-all"
+                          >
+                            &gt;
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="aspect-video bg-gray-100 flex items-center justify-center border-b border-gray-100">
                       <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
