@@ -58,8 +58,14 @@ export default function PerfilProveedor() {
         <div className="max-w-4xl mx-auto">
           <a href="/busqueda" className="text-emerald-400 text-sm font-bold hover:underline block mb-6">Volver a resultados</a>
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl font-black text-black flex-shrink-0">
-              {proveedor.company_name.slice(0, 2).toUpperCase()}
+            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+              {proveedor.logo_url ? (
+                <img src={proveedor.logo_url} alt="logo" className="w-full h-full object-cover"/>
+              ) : (
+                <div className="w-full h-full bg-emerald-500 flex items-center justify-center text-2xl font-black text-black">
+                  {proveedor.company_name.slice(0, 2).toUpperCase()}
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
