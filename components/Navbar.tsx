@@ -11,7 +11,8 @@ export default function Navbar() {
         <div className="text-2xl font-black text-white tracking-tight">MayorLink</div>
       </a>
       <div className="flex items-center gap-4">
-        <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white hidden md:block">Explorar</a>
+        <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white hidden md:block">Proveedores</a>
+        <a href="/solicitudes" className="text-gray-300 text-sm font-medium hover:text-white hidden md:block">Solicitudes</a>
         {session ? (
           <div className="flex items-center gap-3">
             <a href="/panel" className="text-gray-300 text-sm font-medium hover:text-white">Mi panel</a>
