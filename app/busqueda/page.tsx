@@ -8,7 +8,15 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const categorias = ["Todas", "Indumentaria", "Electronica", "Alimentos", "Ferreteria", "Cosmetica", "Hogar", "Deportes", "Calzado"];
+const categorias = ["Todas", "Indumentaria", "Calzado", "Electronica", "Alimentos", "Bebidas", "Ferreteria", "Cosmetica", "Hogar", "Deportes", "Juguetes", "Tecnologia", "Textil", "Otros"];
+
+const PROVINCIAS = [
+  "Todas", "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut",
+  "Cordoba", "Corrientes", "Entre Rios", "Formosa", "Jujuy",
+  "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquen",
+  "Rio Negro", "Salta", "San Juan", "San Luis", "Santa Cruz",
+  "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucuman"
+];
 
 export default function Busqueda() {
   const [proveedores, setProveedores] = useState<any[]>([]);
@@ -32,6 +40,9 @@ export default function Busqueda() {
     let query = supabase.from("providers").select("*").eq("status", "active");
     if (busqueda) {
       query = query.or(`company_name.ilike.%${busqueda}%,description.ilike.%${busqueda}%,city.ilike.%${busqueda}%`);
+    }
+    if (categoria !== "Todas") {
+      query = query.eq("category", categoria);
     }
     if (provincia !== "Todas") {
       query = query.eq("province", provincia);
@@ -83,14 +94,7 @@ export default function Busqueda() {
           <div className="mb-6">
             <div className="text-xs font-black text-black uppercase tracking-widest mb-3">Provincia</div>
             <select value={provincia} onChange={(e) => setProvincia(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black">
-              <option>Todas</option>
-              <option>Buenos Aires</option>
-              <option>CABA</option>
-              <option>Cordoba</option>
-              <option>Santa Fe</option>
-              <option>Mendoza</option>
-              <option>Tucuman</option>
-              <option>Salta</option>
+              {PROVINCIAS.map(p => <option key={p}>{p}</option>)}
             </select>
           </div>
         </aside>
@@ -134,6 +138,7 @@ export default function Busqueda() {
                           <div className="flex items-center gap-2 mb-1">
                             {p.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full">Verificado</span>}
                             {p.is_founder && <span className="text-xs bg-black text-white font-black px-2 py-0.5 rounded-full">Fundador</span>}
+                            {p.category && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">{p.category}</span>}
                           </div>
                           <div className="text-lg font-black text-black">{p.company_name}</div>
                           <div className="text-sm text-gray-500">{p.city ? p.city + ", " : ""}{p.province}</div>
