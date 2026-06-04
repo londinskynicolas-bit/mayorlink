@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import Navbar from "../../../components/Navbar";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,10 +43,13 @@ export default function PerfilProveedor() {
 
   if (!proveedor) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-black text-black mb-4">Proveedor no encontrado</h1>
-          <a href="/busqueda" className="bg-emerald-500 text-black font-black px-6 py-3 rounded-xl">Ir a busqueda</a>
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h1 className="text-2xl font-black text-black mb-4">Proveedor no encontrado</h1>
+            <a href="/busqueda" className="bg-emerald-500 text-black font-black px-6 py-3 rounded-xl">Ir a busqueda</a>
+          </div>
         </div>
       </div>
     );
@@ -53,16 +57,7 @@ export default function PerfilProveedor() {
 
   return (
     <div className="min-h-screen bg-white">
-      <nav className="bg-black px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div>
-          <div className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Mayorista B2B</div>
-          <a href="/" className="text-2xl font-black text-white tracking-tight block">MayorLink</a>
-        </div>
-        <div className="flex items-center gap-4">
-          <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white">Explorar</a>
-          <a href="/registro" className="bg-emerald-500 text-black font-black text-sm px-5 py-2 rounded-full hover:bg-emerald-400 transition-colors">Publicar gratis</a>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="bg-black text-white px-6 py-10">
         <div className="max-w-4xl mx-auto">
