@@ -16,25 +16,13 @@ export default function PerfilProveedor() {
   useEffect(() => {
     const slug = window.location.pathname.split("/").pop();
     if (!slug) return;
-    supabase
-      .from("providers")
-      .select("*")
-      .eq("slug", slug)
-      .single()
+    supabase.from("providers").select("*").eq("slug", slug).single()
       .then(({ data }) => {
         setProveedor(data);
         setCargando(false);
         if (data) {
-          supabase
-            .from("providers")
-            .update({ views_count: (data.views_count || 0) + 1 })
-            .eq("slug", slug)
-            .then(() => {});
-          supabase
-            .from("products")
-            .select("*")
-            .eq("provider_slug", slug)
-            .eq("status", "active")
+          supabase.from("providers").update({ views_count: (data.views_count || 0) + 1 }).eq("slug", slug).then(() => {});
+          supabase.from("products").select("*").eq("provider_slug", slug).eq("status", "active")
             .then(({ data: prods }) => setProductos(prods || []));
         }
       });
@@ -142,27 +130,35 @@ export default function PerfilProveedor() {
             </h2>
             <div className="grid grid-cols-2 gap-4">
               {productos.map((p) => (
-                <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
-                  <div className="aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-200">
-                    <span className="text-xs text-gray-400 font-bold">📦 {p.name}</span>
-                  </div>
-                  <h3 className="font-black text-black mb-1">{p.name}</h3>
-                  {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
-                  <div className="flex gap-2 flex-wrap mb-3">
-                    {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Unidad: {p.price_unit}</span>}
-                    {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
-                    {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
-                  </div>
-                  <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
-                    {p.material && <span>Material: {p.material}</span>}
-                    {p.measures && <span>· Talles: {p.measures}</span>}
-                    {p.stock && <span>· Stock: {p.stock}</span>}
-                  </div>
-                  {proveedor.whatsapp && (
-                    <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name} target="_blank" className="mt-4 block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
-                      Consultar por WhatsApp
-                    </a>
+                <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
+                  {p.images && p.images.length > 0 ? (
+                    <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover"/>
+                  ) : (
+                    <div className="aspect-video bg-gray-100 flex items-center justify-center border-b border-gray-100">
+                      <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
+                    </div>
                   )}
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-black text-black mb-1">{p.name}</h3>
+                    {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Unidad: {p.price_unit}</span>}
+                      {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
+                      {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
+                    </div>
+                    <div className="flex gap-3 text-xs text-gray-400 flex-wrap mb-4">
+                      {p.material && <span>Material: {p.material}</span>}
+                      {p.measures && <span>· Talles: {p.measures}</span>}
+                      {p.stock && <span>· Stock: {p.stock}</span>}
+                    </div>
+                    <div className="mt-auto">
+                      {proveedor.whatsapp && (
+                        <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name} target="_blank" className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm py-3 rounded-xl text-center transition-colors">
+                          Consultar por WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
