@@ -12,7 +12,7 @@ const supabase = createClient(
 const CATEGORIAS = [
   "Todas", "Indumentaria", "Calzado", "Electronica", "Alimentos",
   "Bebidas", "Ferreteria", "Cosmetica", "Hogar", "Deportes",
-  "Juguetes", "Tecnologia", "Otros"
+  "Juguetes", "Tecnologia", "Textil", "Otros"
 ];
 
 export default function Solicitudes() {
@@ -22,6 +22,8 @@ export default function Solicitudes() {
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [publicado, setPublicado] = useState(false);
+  const [proveedoresMatch, setProveedoresMatch] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: "", description: "", category: "", quantity: "",
     city: "", province: "", budget: "", required_date: "",
@@ -40,7 +42,23 @@ export default function Solicitudes() {
     setCargando(false);
   };
 
-  const actualizar = (campo: string, valor: string) => setForm((prev) => ({ ...prev, [campo]: valor }));
+  const actualizar = (campo: string, valor: string) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (campo === "category" && valor !== "") {
+      buscarProveedoresMatch(valor);
+    }
+  };
+
+  const buscarProveedoresMatch = async (cat: string) => {
+    const { data } = await supabase
+      .from("providers")
+      .select("*")
+      .eq("category", cat)
+      .eq("status", "active")
+      .order("profile_score", { ascending: false })
+      .limit(3);
+    setProveedoresMatch(data || []);
+  };
 
   const publicar = async () => {
     if (!form.title || !form.category) return;
@@ -59,8 +77,7 @@ export default function Solicitudes() {
     });
     setGuardando(false);
     if (!error) {
-      setForm({ title: "", description: "", category: "", quantity: "", city: "", province: "", budget: "", required_date: "" });
-      setMostrarForm(false);
+      setPublicado(true);
       cargarSolicitudes();
     }
   };
@@ -85,10 +102,7 @@ export default function Solicitudes() {
             <h1 className="text-4xl font-black mb-2">Solicitudes de compra</h1>
             <p className="text-gray-400">Compradores buscando proveedores ahora mismo</p>
           </div>
-          <button
-            onClick={() => setMostrarForm(!mostrarForm)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors"
-          >
+          <button onClick={() => { setMostrarForm(!mostrarForm); setPublicado(false); }} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors">
             + Publicar solicitud
           </button>
         </div>
@@ -96,13 +110,13 @@ export default function Solicitudes() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
 
-        {mostrarForm && (
+        {mostrarForm && !publicado && (
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-8 mb-8">
             <h2 className="text-xl font-black text-black mb-6">Nueva solicitud de compra</h2>
             <div className="flex flex-col gap-4">
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Que necesitas? *</label>
-                <input type="text" value={form.title} onChange={(e) => actualizar("title", e.target.value)} placeholder="Ej: Busco 50 alfombras persas · Necesito proveedor de sillas para evento" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+                <input type="text" value={form.title} onChange={(e) => actualizar("title", e.target.value)} placeholder="Ej: Busco 50 alfombras · Necesito proveedor de sillas para evento" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
               </div>
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion adicional</label>
@@ -121,6 +135,34 @@ export default function Solicitudes() {
                   <input type="text" value={form.quantity} onChange={(e) => actualizar("quantity", e.target.value)} placeholder="Ej: 100 unidades, 5 docenas" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
+
+              {proveedoresMatch.length > 0 && (
+                <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
+                  <p className="text-sm font-black text-emerald-800 mb-3">Proveedores recomendados para esta categoria</p>
+                  <div className="flex flex-col gap-2">
+                    {proveedoresMatch.map((p) => (
+                      <a key={p.id} href={"/proveedores/" + p.slug} target="_blank" className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 hover:border-emerald-400 border-2 border-transparent transition-all">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                          {p.logo_url ? (
+                            <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                          ) : (
+                            <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-700">
+                              {p.company_name.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-black text-black text-sm">{p.company_name}</div>
+                          <div className="text-xs text-gray-400">{p.city ? p.city + ", " : ""}{p.province}</div>
+                        </div>
+                        {p.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Verificado</span>}
+                        <span className="text-xs text-emerald-600 font-bold">Ver perfil</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Ciudad</label>
@@ -136,7 +178,7 @@ export default function Solicitudes() {
                 <input type="text" value={form.required_date} onChange={(e) => actualizar("required_date", e.target.value)} placeholder="Ej: antes del 30 de junio, urgente" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setMostrarForm(false)} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors">
+                <button onClick={() => { setMostrarForm(false); setProveedoresMatch([]); }} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors">
                   Cancelar
                 </button>
                 <button onClick={publicar} disabled={guardando || !form.title || !form.category} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50">
@@ -144,6 +186,42 @@ export default function Solicitudes() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {publicado && (
+          <div className="bg-white border-2 border-emerald-200 rounded-2xl p-8 mb-8 text-center">
+            <div className="text-4xl mb-3">✅</div>
+            <h3 className="text-xl font-black text-black mb-2">Solicitud publicada</h3>
+            <p className="text-gray-500 text-sm mb-6">Los proveedores de la categoria van a poder ver tu solicitud y enviarte propuestas</p>
+            {proveedoresMatch.length > 0 && (
+              <div className="text-left mb-6">
+                <p className="text-sm font-black text-gray-700 mb-3">Mientras tanto podes contactar directamente a estos proveedores:</p>
+                <div className="flex flex-col gap-2">
+                  {proveedoresMatch.map((p) => (
+                    <a key={p.id} href={"/proveedores/" + p.slug} target="_blank" className="flex items-center gap-3 border-2 border-gray-100 rounded-xl px-4 py-3 hover:border-black transition-all">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                        {p.logo_url ? (
+                          <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                        ) : (
+                          <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-700">
+                            {p.company_name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-black text-black text-sm">{p.company_name}</div>
+                        <div className="text-xs text-gray-400">{p.city ? p.city + ", " : ""}{p.province}</div>
+                      </div>
+                      <span className="text-xs text-emerald-600 font-bold">Ver perfil</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button onClick={() => { setMostrarForm(false); setPublicado(false); setForm({ title: "", description: "", category: "", quantity: "", city: "", province: "", budget: "", required_date: "" }); setProveedoresMatch([]); }} className="bg-black text-white font-black px-6 py-3 rounded-xl hover:bg-emerald-600 transition-colors text-sm">
+              Ver todas las solicitudes
+            </button>
           </div>
         )}
 
