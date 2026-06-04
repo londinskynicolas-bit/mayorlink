@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useSession } from "next-auth/react";
 
@@ -14,35 +14,22 @@ export default function MisProductos() {
   const [productos, setProductos] = useState<any[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [fotosProducto, setFotosProducto] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
-    name: "",
-    description: "",
-    price_unit: "",
-    price_dozen: "",
-    price_box: "",
-    category: "",
-    material: "",
-    measures: "",
-    stock: "",
+    name: "", description: "", price_unit: "", price_dozen: "",
+    price_box: "", category: "", material: "", measures: "", stock: "",
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      window.location.href = "/login";
-    }
+    if (status === "unauthenticated") window.location.href = "/login";
     if (status === "authenticated" && session?.user?.email) {
-      supabase
-        .from("providers")
-        .select("*")
-        .eq("email", session.user.email)
-        .single()
+      supabase.from("providers").select("*").eq("email", session.user.email).single()
         .then(({ data }) => {
           setProveedor(data);
           if (data) {
-            supabase
-              .from("products")
-              .select("*")
-              .eq("provider_slug", data.slug)
+            supabase.from("products").select("*").eq("provider_slug", data.slug)
               .order("created_at", { ascending: false })
               .then(({ data: prods }) => setProductos(prods || []));
           }
@@ -50,8 +37,18 @@ export default function MisProductos() {
     }
   }, [status, session]);
 
-  const actualizar = (campo: string, valor: string) => {
-    setForm((prev) => ({ ...prev, [campo]: valor }));
+  const actualizar = (campo: string, valor: string) => setForm((prev) => ({ ...prev, [campo]: valor }));
+
+  const subirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoFoto(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    const data = await res.json();
+    if (data.url) setFotosProducto((prev) => [...prev, data.url]);
+    setSubiendoFoto(false);
   };
 
   const guardarProducto = async () => {
@@ -69,19 +66,19 @@ export default function MisProductos() {
       material: form.material,
       measures: form.measures,
       stock: form.stock,
+      images: fotosProducto,
       status: "active",
     }).select().single();
     setCargando(false);
     if (!error && data) {
       setProductos((prev) => [data, ...prev]);
       setForm({ name: "", description: "", price_unit: "", price_dozen: "", price_box: "", category: "", material: "", measures: "", stock: "" });
+      setFotosProducto([]);
       setMostrarForm(false);
     }
   };
 
-  if (status === "loading") {
-    return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
-  }
+  if (status === "loading") return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
 
   if (!proveedor && status === "authenticated") {
     return (
@@ -127,8 +124,28 @@ export default function MisProductos() {
               </div>
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion</label>
-                <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Descripcion detallada del producto, caracteristicas, usos..." rows={3} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
+                <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Descripcion detallada del producto..." rows={3} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
               </div>
+
+              <div>
+                <label className="text-sm font-bold text-gray-700 block mb-2">Fotos del producto</label>
+                <div className="flex gap-3 flex-wrap">
+                  {fotosProducto.map((url, i) => (
+                    <div key={i} className="relative w-24 h-24">
+                      <img src={url} alt="foto" className="w-24 h-24 object-cover rounded-xl border-2 border-gray-200"/>
+                      <button onClick={() => setFotosProducto((prev) => prev.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full text-xs font-black flex items-center justify-center">x</button>
+                    </div>
+                  ))}
+                  {fotosProducto.length < 6 && (
+                    <button onClick={() => fileInputRef.current?.click()} disabled={subiendoFoto} className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition-colors">
+                      {subiendoFoto ? <span className="text-xs">Subiendo...</span> : <><span className="text-2xl">+</span><span className="text-xs mt-1">Foto</span></>}
+                    </button>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={subirFoto} className="hidden"/>
+                <p className="text-xs text-gray-400 mt-2">Hasta 6 fotos. JPG, PNG o WEBP.</p>
+              </div>
+
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Precio por unidad</label>
@@ -143,23 +160,16 @@ export default function MisProductos() {
                   <input type="text" value={form.price_box} onChange={(e) => actualizar("price_box", e.target.value)} placeholder="Ej: $80.000" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
                   <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black">
                     <option value="">Seleccionar...</option>
-                    <option>Indumentaria</option>
-                    <option>Calzado</option>
-                    <option>Electronica</option>
-                    <option>Alimentos</option>
-                    <option>Bebidas</option>
-                    <option>Ferreteria</option>
-                    <option>Cosmetica</option>
-                    <option>Hogar</option>
-                    <option>Deportes</option>
-                    <option>Juguetes</option>
-                    <option>Tecnologia</option>
-                    <option>Otros</option>
+                    <option>Indumentaria</option><option>Calzado</option><option>Electronica</option>
+                    <option>Alimentos</option><option>Bebidas</option><option>Ferreteria</option>
+                    <option>Cosmetica</option><option>Hogar</option><option>Deportes</option>
+                    <option>Juguetes</option><option>Tecnologia</option><option>Otros</option>
                   </select>
                 </div>
                 <div>
@@ -167,22 +177,20 @@ export default function MisProductos() {
                   <input type="text" value={form.stock} onChange={(e) => actualizar("stock", e.target.value)} placeholder="Ej: 500 unidades, stock permanente" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Material / Composicion</label>
-                  <input type="text" value={form.material} onChange={(e) => actualizar("material", e.target.value)} placeholder="Ej: 100% algodon, poliester, cuero" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+                  <input type="text" value={form.material} onChange={(e) => actualizar("material", e.target.value)} placeholder="Ej: 100% algodon" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Medidas / Talles</label>
                   <input type="text" value={form.measures} onChange={(e) => actualizar("measures", e.target.value)} placeholder="Ej: S, M, L, XL o 36 al 46" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
-              <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
-                <p className="text-sm font-bold text-amber-800 mb-1">Fotos del producto</p>
-                <p className="text-xs text-amber-600">La subida de fotos estara disponible en la proxima actualizacion. Por ahora carga la info del producto y despues agregamos las fotos.</p>
-              </div>
+
               <div className="flex gap-3">
-                <button onClick={() => setMostrarForm(false)} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors">
+                <button onClick={() => { setMostrarForm(false); setFotosProducto([]); }} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors">
                   Cancelar
                 </button>
                 <button onClick={guardarProducto} disabled={cargando || !form.name} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50">
@@ -197,7 +205,7 @@ export default function MisProductos() {
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-12 text-center">
             <div className="text-5xl mb-4">📦</div>
             <h2 className="text-xl font-black text-black mb-2">Todavia no publicaste productos</h2>
-            <p className="text-gray-500 text-sm mb-6">Agrega tus productos para que los compradores puedan ver tu catalogo completo</p>
+            <p className="text-gray-500 text-sm mb-6">Agrega tus productos para que los compradores vean tu catalogo completo</p>
             <button onClick={() => setMostrarForm(true)} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-xl transition-colors">
               Agregar primer producto
             </button>
@@ -206,9 +214,13 @@ export default function MisProductos() {
           <div className="grid grid-cols-2 gap-4">
             {productos.map((p) => (
               <div key={p.id} className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
-                <div className="aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-200">
-                  <span className="text-xs text-gray-400 font-bold">Sin fotos todavia</span>
-                </div>
+                {p.images && p.images.length > 0 ? (
+                  <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover rounded-xl mb-4"/>
+                ) : (
+                  <div className="aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-200">
+                    <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
+                  </div>
+                )}
                 <h3 className="font-black text-black mb-1">{p.name}</h3>
                 {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
                 <div className="flex gap-2 flex-wrap mb-3">
@@ -216,7 +228,7 @@ export default function MisProductos() {
                   {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
                   {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
                 </div>
-                <div className="flex gap-2 flex-wrap text-xs text-gray-400">
+                <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
                   {p.material && <span>Material: {p.material}</span>}
                   {p.measures && <span>· Talles: {p.measures}</span>}
                   {p.stock && <span>· Stock: {p.stock}</span>}
