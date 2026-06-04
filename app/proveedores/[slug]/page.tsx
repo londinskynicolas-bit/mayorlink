@@ -14,7 +14,7 @@ export default function PerfilProveedor() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const slug = params.slug as string;
+    const slug = (params.slug as string) || window.location.pathname.split("/").pop();
     if (!slug) return;
     supabase
       .from("providers")
