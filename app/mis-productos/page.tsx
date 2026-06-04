@@ -126,7 +126,6 @@ export default function MisProductos() {
                 <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion</label>
                 <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Descripcion detallada del producto..." rows={3} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
               </div>
-
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-2">Fotos del producto</label>
                 <div className="flex gap-3 flex-wrap">
@@ -137,7 +136,7 @@ export default function MisProductos() {
                     </div>
                   ))}
                   {fotosProducto.length < 6 && (
-                    <button onClick={() => fileInputRef.current?.click()} disabled={subiendoFoto} className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition-colors">
+                    <button onClick={() => fileInputRef.current?.click()} disabled={subiendoFoto} className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black transition-colors">
                       {subiendoFoto ? <span className="text-xs">Subiendo...</span> : <><span className="text-2xl">+</span><span className="text-xs mt-1">Foto</span></>}
                     </button>
                   )}
@@ -145,7 +144,6 @@ export default function MisProductos() {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={subirFoto} className="hidden"/>
                 <p className="text-xs text-gray-400 mt-2">Hasta 6 fotos. JPG, PNG o WEBP.</p>
               </div>
-
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Precio por unidad</label>
@@ -156,11 +154,10 @@ export default function MisProductos() {
                   <input type="text" value={form.price_dozen} onChange={(e) => actualizar("price_dozen", e.target.value)} placeholder="Ej: $25.000" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Precio por caja/bulto</label>
+                  <label className="text-sm font-bold text-gray-700 block mb-1">Precio por caja</label>
                   <input type="text" value={form.price_box} onChange={(e) => actualizar("price_box", e.target.value)} placeholder="Ej: $80.000" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
@@ -174,21 +171,19 @@ export default function MisProductos() {
                 </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Stock disponible</label>
-                  <input type="text" value={form.stock} onChange={(e) => actualizar("stock", e.target.value)} placeholder="Ej: 500 unidades, stock permanente" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+                  <input type="text" value={form.stock} onChange={(e) => actualizar("stock", e.target.value)} placeholder="Ej: 500 unidades" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Material / Composicion</label>
+                  <label className="text-sm font-bold text-gray-700 block mb-1">Material</label>
                   <input type="text" value={form.material} onChange={(e) => actualizar("material", e.target.value)} placeholder="Ej: 100% algodon" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700 block mb-1">Medidas / Talles</label>
-                  <input type="text" value={form.measures} onChange={(e) => actualizar("measures", e.target.value)} placeholder="Ej: S, M, L, XL o 36 al 46" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+                  <input type="text" value={form.measures} onChange={(e) => actualizar("measures", e.target.value)} placeholder="Ej: S, M, L, XL" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <button onClick={() => { setMostrarForm(false); setFotosProducto([]); }} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors">
                   Cancelar
@@ -213,25 +208,25 @@ export default function MisProductos() {
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {productos.map((p) => (
-              <div key={p.id} className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
+              <div key={p.id} className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all">
                 {p.images && p.images.length > 0 ? (
-                  <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover rounded-xl mb-4"/>
+                  <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover"/>
                 ) : (
-                  <div className="aspect-video bg-gray-100 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-200">
+                  <div className="aspect-video bg-gray-100 flex items-center justify-center border-b border-gray-100">
                     <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
                   </div>
                 )}
-                <h3 className="font-black text-black mb-1">{p.name}</h3>
-                {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
-                <div className="flex gap-2 flex-wrap mb-3">
-                  {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Unidad: {p.price_unit}</span>}
-                  {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
-                  {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
-                </div>
-                <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
-                  {p.material && <span>Material: {p.material}</span>}
-                  {p.measures && <span>· Talles: {p.measures}</span>}
-                  {p.stock && <span>· Stock: {p.stock}</span>}
+                <div className="p-5">
+                  <h3 className="font-black text-black mb-1">{p.name}</h3>
+                  {p.description && <p className="text-xs text-gray-500 mb-3 line-clamp-2">{p.description}</p>}
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full">Unidad: {p.price_unit}</span>}
+                    {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">Docena: {p.price_dozen}</span>}
+                    {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-full">Caja: {p.price_box}</span>}
+                  </div>
+                  <a href={"/editar-producto?id=" + p.id} className="block w-full border-2 border-black text-black font-black text-xs py-2 rounded-xl text-center hover:bg-black hover:text-white transition-colors">
+                    Editar producto
+                  </a>
                 </div>
               </div>
             ))}
