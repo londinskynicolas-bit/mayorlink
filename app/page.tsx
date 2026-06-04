@@ -118,8 +118,14 @@ export default function Home() {
               <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-base font-black text-emerald-700">
-                      {p.company_name.slice(0, 2).toUpperCase()}
+                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                      {p.logo_url ? (
+                        <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                      ) : (
+                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-base font-black text-emerald-700">
+                          {p.company_name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div className="font-black text-black text-sm">{p.company_name}</div>
@@ -152,7 +158,7 @@ export default function Home() {
       <section className="bg-black px-6 py-16 text-center">
         <h2 className="text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
         <p className="text-gray-400 mb-8 max-w-md mx-auto">Publica tu empresa gratis y empieza a recibir consultas de comerciantes de todo el pais</p>
-        <a href="/registro" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
+        <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
           Publicar mi empresa gratis
         </a>
         <p className="text-gray-600 text-xs mt-4">Los primeros 100 proveedores obtienen el badge de Fundador permanente</p>

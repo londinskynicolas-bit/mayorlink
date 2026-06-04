@@ -119,8 +119,14 @@ export default function Busqueda() {
               {proveedores.map((p) => (
                 <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
                   <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center text-lg font-black text-emerald-700 flex-shrink-0">
-                      {p.company_name.slice(0, 2).toUpperCase()}
+                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                      {p.logo_url ? (
+                        <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                      ) : (
+                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-lg font-black text-emerald-700">
+                          {p.company_name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-1">
