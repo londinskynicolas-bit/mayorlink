@@ -101,9 +101,25 @@ export default function EditarPerfil() {
     setSubiendoLogo(false);
   };
 
+  const calcularScore = (f = form, mp = metodosPago, logo = proveedor?.logo_url) => {
+    let score = 0;
+    if (f.company_name) score += 15;
+    if (f.description) score += 20;
+    if (f.category) score += 10;
+    if (f.province) score += 10;
+    if (f.whatsapp) score += 15;
+    if (f.instagram) score += 5;
+    if (f.min_order) score += 10;
+    if (mp.length > 0) score += 10;
+    if (f.shipping_info) score += 5;
+    if (logo) score += 10;
+    return Math.min(score, 100);
+  };
+
   const guardar = async () => {
     if (!proveedor) return;
     setGuardando(true);
+    const score = calcularScore(form, metodosPago, proveedor?.logo_url);
     await supabase.from("providers").update({
       company_name: form.company_name,
       description: form.description,
@@ -116,29 +132,17 @@ export default function EditarPerfil() {
       min_order: form.min_order,
       payment_methods: metodosPago.join(", "),
       shipping_info: form.shipping_info,
-      profile_score: calcularScore(),
+      profile_score: score,
     }).eq("id", proveedor.id);
+    setProveedor((prev: any) => ({ ...prev, profile_score: score }));
     setGuardando(false);
     setGuardado(true);
     setTimeout(() => setGuardado(false), 3000);
   };
 
-  const calcularScore = () => {
-    let score = 0;
-    if (form.company_name) score += 15;
-    if (form.description) score += 20;
-    if (form.category) score += 10;
-    if (form.province) score += 10;
-    if (form.whatsapp) score += 15;
-    if (form.instagram) score += 5;
-    if (form.min_order) score += 10;
-    if (metodosPago.length > 0) score += 10;
-    if (form.shipping_info) score += 5;
-    if (proveedor?.logo_url) score += 10;
-    return Math.min(score, 100);
-  };
-
   if (cargando) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
+
+  const scoreActual = calcularScore(form, metodosPago, proveedor?.logo_url);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -147,7 +151,9 @@ export default function EditarPerfil() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-black text-black">Editar perfil</h1>
-            <p className="text-gray-500 text-sm mt-1">Completitud del perfil: <span className="font-black text-emerald-600">{calcularScore()}%</span></p>
+            <p className="text-gray-500 text-sm mt-1">
+              Completitud: <span className={`font-black ${scoreActual >= 80 ? "text-emerald-600" : "text-amber-500"}`}>{scoreActual}%</span>
+            </p>
           </div>
           <a href="/panel" className="text-gray-500 text-sm hover:text-black">Volver al panel</a>
         </div>
