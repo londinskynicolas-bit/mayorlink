@@ -1,33 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "MayorLink | Directorio mayorista B2B",
-  description: "Encontra proveedores mayoristas en Argentina",
+  title: "MayorLink | Directorio de proveedores mayoristas en Argentina",
+  description: "Encontra fabricantes, importadores y distribuidores mayoristas en Argentina. Busca por categoria y provincia. Contacto directo por WhatsApp.",
+  keywords: "proveedores mayoristas argentina, directorio mayoristas, fabricantes argentina, importadores mayoristas, distribuidores argentina",
+  openGraph: {
+    title: "MayorLink | Proveedores mayoristas en Argentina",
+    description: "El directorio mas completo de proveedores mayoristas de Argentina. Busca, compara y contacta directo.",
+    url: "https://mayorlink.vercel.app",
+    siteName: "MayorLink",
+    locale: "es_AR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="es">
+      <body>{children}</body>
     </html>
   );
 }
