@@ -56,6 +56,13 @@ export default function PerfilProveedor() {
     setToggleandoFav(false);
   };
 
+  const registrarClickWhatsApp = async () => {
+    if (!proveedor) return;
+    await supabase.from("providers").update({
+      whatsapp_clicks: (proveedor.whatsapp_clicks || 0) + 1
+    }).eq("slug", proveedor.slug);
+  };
+
   const promedioRating = resenas.length > 0
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
     : null;
@@ -112,10 +119,18 @@ export default function PerfilProveedor() {
                 {proveedor.views_count > 0 && (
                   <span className="text-emerald-400 text-xs font-bold">{proveedor.views_count} visitas</span>
                 )}
+                {proveedor.whatsapp_clicks > 0 && (
+                  <span className="text-emerald-400 text-xs font-bold">{proveedor.whatsapp_clicks} contactos por WhatsApp</span>
+                )}
               </div>
               <div className="flex gap-3 flex-wrap">
                 {proveedor.whatsapp && (
-                  <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
+                  
+                    href={"https://wa.me/" + proveedor.whatsapp}
+                    target="_blank"
+                    onClick={registrarClickWhatsApp}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm"
+                  >
                     Contactar por WhatsApp
                   </a>
                 )}
@@ -218,7 +233,12 @@ export default function PerfilProveedor() {
                     </div>
                     <div className="mt-auto">
                       {proveedor.whatsapp && (
-                        <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name} target="_blank" className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm py-3 rounded-xl text-center transition-colors">
+                        
+                          href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name}
+                          target="_blank"
+                          onClick={registrarClickWhatsApp}
+                          className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm py-3 rounded-xl text-center transition-colors"
+                        >
                           Consultar por WhatsApp
                         </a>
                       )}
