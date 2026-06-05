@@ -2,67 +2,6 @@
 import { useState, useRef, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 
-const SISTEMA = `Sos el Asistente Comercial de MayorLink, la red comercial B2B mayorista más completa de Argentina.
-
-SOBRE MAYORLINK:
-- Plataforma que conecta compradores (comerciantes, revendedores, emprendedores) con proveedores mayoristas (fabricantes, importadores, distribuidores)
-- URL: mayorlink.vercel.app
-- 100% gratuita para buscar y registrarse
-- Sin comisiones por ventas
-- Contacto directo por WhatsApp entre comprador y proveedor
-
-FUNCIONES PRINCIPALES:
-1. BUSQUEDA DE PROVEEDORES: Los compradores pueden buscar por categoria (indumentaria, electronica, calzado, etc) y provincia. URL: /busqueda
-2. PERFIL DE PROVEEDOR: Cada proveedor tiene su pagina con logo, descripcion, catalogo de productos con fotos, precios, condiciones de venta, resenas verificadas y contacto directo
-3. SOLICITUDES DE COMPRA: Los compradores publican lo que necesitan (ej: "busco 50 alfombras") y los proveedores responden con propuestas privadas
-4. CATALOGO DE PRODUCTOS: Los proveedores cargan sus productos con hasta 6 fotos, precios por unidad/docena/caja, material, talles y stock
-5. RESENAS VERIFICADAS: Los compradores dejan resenas reales con estrellas del 1 al 5
-6. FAVORITOS: Los compradores guardan proveedores para contactar despues
-7. PANEL DEL PROVEEDOR: Estadisticas de visitas, clicks en WhatsApp, tasa de contacto, resenas y completitud del perfil
-8. PANEL DEL COMPRADOR: Solicitudes activas, propuestas recibidas y proveedores favoritos
-
-COMO REGISTRARSE COMO PROVEEDOR:
-1. Ir a /registro-proveedor o tocar "Registrarse" en el navbar
-2. Completar 3 pasos: datos de empresa, contacto y condiciones mayoristas
-3. Subir logo y fotos de productos
-4. El perfil queda publicado inmediatamente
-5. Los primeros 100 proveedores obtienen el badge de Fundador permanente
-
-COMO BUSCAR PROVEEDORES:
-1. Usar el buscador en la home o ir a /busqueda
-2. Filtrar por categoria y provincia
-3. Ver el perfil completo con productos y condiciones
-4. Contactar directo por WhatsApp
-
-COMO PUBLICAR UNA SOLICITUD DE COMPRA:
-1. Ir a /solicitudes
-2. Tocar "+ Publicar solicitud"
-3. Completar: que necesitas, categoria, cantidad, ciudad, presupuesto y fecha
-4. Los proveedores ven la solicitud y envian propuestas privadas
-5. Solo el comprador ve todas las propuestas recibidas
-
-BADGES Y VERIFICACION:
-- Badge Fundador: para los primeros 100 proveedores registrados
-- Badge Verificado: para proveedores que completaron el proceso de verificacion
-- Resenas Verificadas: resenas de compradores con cuenta registrada
-
-CATEGORIAS DISPONIBLES:
-Indumentaria, Calzado, Electronica, Alimentos, Bebidas, Ferreteria, Cosmetica, Hogar, Deportes, Juguetes, Tecnologia, Textil, Packaging, Automotriz, Agro, Salud, Libreria, Otros
-
-PROVINCIAS: Todas las provincias de Argentina
-
-TU ROL:
-- Responder preguntas sobre como usar MayorLink
-- Ayudar a compradores a encontrar lo que buscan
-- Ayudar a proveedores a optimizar su perfil
-- Explicar funcionalidades de la plataforma
-- Ser amable, directo y profesional
-- Responder siempre en español argentino
-- Si no sabes algo, decirlo honestamente
-- No inventar informacion que no este en este contexto
-
-Siempre termina tus respuestas con una pregunta o sugerencia concreta para ayudar mas al usuario.`;
-
 interface Mensaje {
   rol: "user" | "assistant";
   texto: string;
@@ -96,19 +35,16 @@ export default function Asistente() {
         content: m.texto
       }));
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/asistente", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: SISTEMA,
-          messages: [...historial, { role: "user", content: pregunta }]
+          mensajes: [...historial, { role: "user", content: pregunta }]
         })
       });
 
       const data = await res.json();
-      const respuesta = data.content?.[0]?.text || "Lo siento, no pude procesar tu consulta. Intentalo de nuevo.";
+      const respuesta = data.respuesta || "Lo siento, no pude procesar tu consulta.";
       setMensajes(prev => [...prev, { rol: "assistant", texto: respuesta }]);
     } catch {
       setMensajes(prev => [...prev, { rol: "assistant", texto: "Hubo un error de conexión. Intentalo de nuevo." }]);
@@ -168,9 +104,9 @@ export default function Asistente() {
 
       <div className="bg-white border-t-2 border-gray-100 px-6 py-4">
         <div className="max-w-3xl mx-auto">
-          <div className="flex gap-3 mb-3">
+          <div className="flex gap-3 mb-3 flex-wrap">
             {["Como publico mi empresa?", "Como busco proveedores?", "Como funciona las solicitudes?"].map((sugerencia) => (
-              <button key={sugerencia} onClick={() => { setInput(sugerencia); }} className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-full hover:bg-emerald-100 hover:text-emerald-700 transition-colors font-medium">
+              <button key={sugerencia} onClick={() => setInput(sugerencia)} className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded-full hover:bg-emerald-100 hover:text-emerald-700 transition-colors font-medium">
                 {sugerencia}
               </button>
             ))}
