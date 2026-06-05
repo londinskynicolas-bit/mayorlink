@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "MayorLink | Directorio de proveedores mayoristas en Argentina",
   description: "Encontra fabricantes, importadores y distribuidores mayoristas en Argentina. Busca por categoria y provincia. Contacto directo por WhatsApp.",
   keywords: "proveedores mayoristas argentina, directorio mayoristas, fabricantes argentina, importadores mayoristas, distribuidores argentina",
+  verification: {
+    google: "LNMD34D1A4q7jV0QH6kYtW-jgTB6TLhwv24RRrrnlgw",
+  },
   openGraph: {
     title: "MayorLink | Proveedores mayoristas en Argentina",
     description: "El directorio mas completo de proveedores mayoristas de Argentina. Busca, compara y contacta directo.",
