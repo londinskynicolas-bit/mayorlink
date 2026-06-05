@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useSession } from "next-auth/react";
 import Navbar from "../../../components/Navbar";
 
 const supabase = createClient(
@@ -9,10 +10,13 @@ const supabase = createClient(
 );
 
 export default function PerfilProveedor() {
+  const { data: session } = useSession();
   const [proveedor, setProveedor] = useState<any>(null);
   const [productos, setProductos] = useState<any[]>([]);
   const [resenas, setResenas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [esFavorito, setEsFavorito] = useState(false);
+  const [toggleandoFav, setToggleandoFav] = useState(false);
   const [fotoActiva, setFotoActiva] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
@@ -31,6 +35,26 @@ export default function PerfilProveedor() {
         }
       });
   }, []);
+
+  useEffect(() => {
+    if (session?.user?.email && proveedor?.slug) {
+      supabase.from("favorites").select("id").eq("buyer_email", session.user.email).eq("provider_slug", proveedor.slug).single()
+        .then(({ data }) => setEsFavorito(!!data));
+    }
+  }, [session, proveedor]);
+
+  const toggleFavorito = async () => {
+    if (!session?.user?.email || !proveedor) return;
+    setToggleandoFav(true);
+    if (esFavorito) {
+      await supabase.from("favorites").delete().eq("buyer_email", session.user.email).eq("provider_slug", proveedor.slug);
+      setEsFavorito(false);
+    } else {
+      await supabase.from("favorites").insert({ buyer_email: session.user.email, provider_slug: proveedor.slug });
+      setEsFavorito(true);
+    }
+    setToggleandoFav(false);
+  };
 
   const promedioRating = resenas.length > 0
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
@@ -73,7 +97,7 @@ export default function PerfilProveedor() {
               <div className="flex items-center gap-2 mb-2">
                 {proveedor.is_verified && <span className="text-xs bg-emerald-500 text-black font-black px-3 py-1 rounded-full">Verificado</span>}
                 {proveedor.is_founder && <span className="text-xs bg-white text-black font-black px-3 py-1 rounded-full">Fundador</span>}
-                {proveedor.category && <span className="text-xs bg-gray-700 text-gray-200 font-bold px-3 py-1 rounded-full">{proveedor.category}</span>}
+                {proveedor.category && <span className="text-xs bg-gray-700 text-gray-200 font-bold px-3 py-1 rounded-full capitalize">{proveedor.category}</span>}
               </div>
               <h1 className="text-3xl font-black mb-1">{proveedor.company_name}</h1>
               <p className="text-gray-400 text-sm mb-1">{proveedor.city ? proveedor.city + ", " : ""}{proveedor.province}</p>
@@ -104,6 +128,11 @@ export default function PerfilProveedor() {
                   <a href={"mailto:" + proveedor.email} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-white transition-colors text-sm">
                     Email
                   </a>
+                )}
+                {session && (
+                  <button onClick={toggleFavorito} disabled={toggleandoFav} className={`border-2 font-black px-6 py-3 rounded-xl transition-colors text-sm ${esFavorito ? "bg-yellow-400 border-yellow-400 text-black" : "border-gray-600 text-white hover:border-yellow-400 hover:text-yellow-400"}`}>
+                    {toggleandoFav ? "..." : esFavorito ? "❤️ Guardado" : "🤍 Guardar"}
+                  </button>
                 )}
                 <a href={"/resena?proveedor=" + proveedor.slug} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-sm">
                   Dejar resena
@@ -154,37 +183,19 @@ export default function PerfilProveedor() {
                 <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
                   {p.images && p.images.length > 0 ? (
                     <div className="relative">
-                      <img
-                        src={p.images[fotoActiva[p.id] || 0]}
-                        alt={p.name}
-                        className="w-full aspect-video object-cover"
-                      />
+                      <img src={p.images[fotoActiva[p.id] || 0]} alt={p.name} className="w-full aspect-video object-cover"/>
                       {p.images.length > 1 && (
-                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                          {p.images.map((_: string, i: number) => (
-                            <button
-                              key={i}
-                              onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))}
-                              className={`w-2 h-2 rounded-full transition-all ${(fotoActiva[p.id] || 0) === i ? "bg-white scale-125" : "bg-white opacity-50"}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                      {p.images.length > 1 && (
-                        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
-                          <button
-                            onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))}
-                            className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80 transition-all"
-                          >
-                            &lt;
-                          </button>
-                          <button
-                            onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.min(p.images.length - 1, (prev[p.id] || 0) + 1) }))}
-                            className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80 transition-all"
-                          >
-                            &gt;
-                          </button>
-                        </div>
+                        <>
+                          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                            {p.images.map((_: string, i: number) => (
+                              <button key={i} onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))} className={`w-2 h-2 rounded-full transition-all ${(fotoActiva[p.id] || 0) === i ? "bg-white scale-125" : "bg-white opacity-50"}`}/>
+                            ))}
+                          </div>
+                          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
+                            <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80">&lt;</button>
+                            <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.min(p.images.length - 1, (prev[p.id] || 0) + 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs hover:bg-opacity-80">&gt;</button>
+                          </div>
+                        </>
                       )}
                     </div>
                   ) : (
@@ -239,15 +250,11 @@ export default function PerfilProveedor() {
               {promedioRating && <span className="ml-2 text-yellow-500">{promedioRating} ⭐</span>}
               <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{resenas.length} resenas</span>
             </h2>
-            <a href={"/resena?proveedor=" + proveedor.slug} className="text-emerald-600 text-sm font-bold hover:underline">
-              Dejar resena
-            </a>
+            <a href={"/resena?proveedor=" + proveedor.slug} className="text-emerald-600 text-sm font-bold hover:underline">Dejar resena</a>
           </div>
-
           {resenas.length === 0 ? (
             <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
               <p className="text-gray-400 font-bold mb-2">Todavia no hay resenas</p>
-              <p className="text-gray-400 text-sm mb-4">Se el primero en dejar una resena de este proveedor</p>
               <a href={"/resena?proveedor=" + proveedor.slug} className="inline-block bg-emerald-500 text-black font-black px-6 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
                 Dejar resena
               </a>
@@ -266,9 +273,7 @@ export default function PerfilProveedor() {
                         {r.is_verified && <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Verificada</span>}
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {new Date(r.created_at).toLocaleDateString("es-AR")}
-                    </div>
+                    <div className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString("es-AR")}</div>
                   </div>
                   {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
                 </div>
