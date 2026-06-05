@@ -11,11 +11,14 @@ const supabase = createClient(
 export default function Navbar() {
   const { data: session } = useSession();
   const [esProveedor, setEsProveedor] = useState(false);
+  const [mensajesNoLeidos, setMensajesNoLeidos] = useState(0);
 
   useEffect(() => {
     if (session?.user?.email) {
       supabase.from("providers").select("id").eq("email", session.user.email).single()
         .then(({ data }) => setEsProveedor(!!data));
+      supabase.from("messages").select("id").eq("receiver_email", session.user.email).eq("read", false)
+        .then(({ data }) => setMensajesNoLeidos(data?.length || 0));
     }
   }, [session]);
 
@@ -30,6 +33,14 @@ export default function Navbar() {
         <a href="/solicitudes" className="text-gray-300 text-sm font-medium hover:text-white hidden md:block">Solicitudes</a>
         {session ? (
           <div className="flex items-center gap-3">
+            <a href="/mensajes" className="text-gray-300 text-sm font-medium hover:text-white relative hidden md:block">
+              Mensajes
+              {mensajesNoLeidos > 0 && (
+                <span className="absolute -top-2 -right-3 bg-emerald-500 text-black text-xs font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {mensajesNoLeidos}
+                </span>
+              )}
+            </a>
             <a href={esProveedor ? "/panel" : "/panel-comprador"} className="text-gray-300 text-sm font-medium hover:text-white">
               Mi panel
             </a>
