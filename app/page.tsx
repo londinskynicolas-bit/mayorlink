@@ -65,9 +65,9 @@ export default function Home() {
           </div>
           <div className="flex gap-3 mt-4">
             {["indumentaria", "electronica", "cosmetica", "ferreteria", "calzado"].map((t) => (
-              <button key={t} onClick={() => { setBusqueda(t); window.location.href = "/busqueda?q=" + t; }} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors underline">
+              <a key={t} href={`/proveedores-categoria/${t}/todas`} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors underline">
                 {t}
-              </button>
+              </a>
             ))}
           </div>
         </div>
@@ -94,16 +94,16 @@ export default function Home() {
           <h2 className="text-xl font-black text-black uppercase tracking-tight mb-6">Categorias</h2>
           <div className="grid grid-cols-4 gap-3">
             {[
-              { nombre: "Indumentaria", emoji: "👕" },
-              { nombre: "Electronica", emoji: "📱" },
-              { nombre: "Alimentos", emoji: "🥗" },
-              { nombre: "Ferreteria", emoji: "🔧" },
-              { nombre: "Cosmetica", emoji: "💄" },
-              { nombre: "Hogar", emoji: "🛋️" },
-              { nombre: "Deportes", emoji: "⚽" },
-              { nombre: "Calzado", emoji: "👟" },
+              { nombre: "Indumentaria", emoji: "👕", slug: "indumentaria" },
+              { nombre: "Electronica", emoji: "📱", slug: "electronica" },
+              { nombre: "Alimentos", emoji: "🥗", slug: "alimentos" },
+              { nombre: "Ferreteria", emoji: "🔧", slug: "ferreteria" },
+              { nombre: "Cosmetica", emoji: "💄", slug: "cosmetica" },
+              { nombre: "Hogar", emoji: "🛋️", slug: "hogar" },
+              { nombre: "Deportes", emoji: "⚽", slug: "deportes" },
+              { nombre: "Calzado", emoji: "👟", slug: "calzado" },
             ].map((cat) => (
-              <a key={cat.nombre} href={"/busqueda?q=" + cat.nombre.toLowerCase()} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
+              <a key={cat.nombre} href={`/proveedores-categoria/${cat.slug}/todas`} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
                 <div className="text-3xl mb-2">{cat.emoji}</div>
                 <div className="text-sm font-black text-black">{cat.nombre}</div>
                 <div className="text-xs text-emerald-600 font-bold mt-1">Ver proveedores</div>
@@ -156,6 +156,32 @@ export default function Home() {
                   </a>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 px-6 py-10">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-black text-black uppercase tracking-tight mb-6">Busca por provincia</h2>
+          <div className="grid grid-cols-6 gap-2">
+            {[
+              { nombre: "Buenos Aires", slug: "buenos-aires" },
+              { nombre: "CABA", slug: "caba" },
+              { nombre: "Cordoba", slug: "cordoba" },
+              { nombre: "Santa Fe", slug: "santa-fe" },
+              { nombre: "Mendoza", slug: "mendoza" },
+              { nombre: "Tucuman", slug: "tucuman" },
+              { nombre: "Salta", slug: "salta" },
+              { nombre: "Entre Rios", slug: "entre-rios" },
+              { nombre: "Neuquen", slug: "neuquen" },
+              { nombre: "Chaco", slug: "chaco" },
+              { nombre: "Corrientes", slug: "corrientes" },
+              { nombre: "Misiones", slug: "misiones" },
+            ].map((prov) => (
+              <a key={prov.slug} href={`/proveedores-categoria/todas/${prov.slug}`} className="bg-white border-2 border-gray-100 rounded-xl px-3 py-2 text-center hover:border-black transition-all">
+                <div className="text-xs font-black text-black">{prov.nombre}</div>
+              </a>
             ))}
           </div>
         </div>
