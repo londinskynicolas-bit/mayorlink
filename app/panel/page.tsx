@@ -53,6 +53,10 @@ export default function Panel() {
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
     : null;
 
+  const tasaContacto = proveedor?.views_count > 0
+    ? Math.round((proveedor.whatsapp_clicks || 0) / proveedor.views_count * 100)
+    : 0;
+
   if (status === "loading" || cargando) {
     return <div className="min-h-screen bg-black flex items-center justify-center"><div className="text-white font-bold">Cargando...</div></div>;
   }
@@ -92,9 +96,7 @@ export default function Panel() {
           <a href="/" className="text-2xl font-black text-white tracking-tight block">MayorLink</a>
         </div>
         <div className="flex items-center gap-4">
-          <a href="/panel-comprador" className="text-emerald-400 text-xs font-bold hover:underline">
-            Panel de comprador
-          </a>
+          <a href="/panel-comprador" className="text-emerald-400 text-xs font-bold hover:underline">Panel de comprador</a>
           <span className="text-gray-400 text-sm">{session?.user?.email}</span>
           <button onClick={() => signOut()} className="text-gray-400 text-sm hover:text-white">Salir</button>
         </div>
@@ -103,14 +105,18 @@ export default function Panel() {
       <div className="max-w-4xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-black text-black mb-8">Mi panel de proveedor</h1>
 
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-5 gap-4 mb-8">
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
             <div className="text-3xl font-black text-emerald-500">{proveedor.views_count || 0}</div>
             <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Visitas</div>
           </div>
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
-            <div className="text-3xl font-black text-black">{productos.length}</div>
-            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Productos</div>
+            <div className="text-3xl font-black text-green-500">{proveedor.whatsapp_clicks || 0}</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Clicks WA</div>
+          </div>
+          <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+            <div className="text-3xl font-black text-blue-500">{tasaContacto}%</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Tasa contacto</div>
           </div>
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
             <div className="text-3xl font-black text-yellow-500">{promedioRating ? promedioRating + "⭐" : "-"}</div>
@@ -118,7 +124,7 @@ export default function Panel() {
           </div>
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
             <div className="text-3xl font-black text-black">{proveedor.profile_score || 0}%</div>
-            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Perfil completo</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Perfil</div>
           </div>
         </div>
 
