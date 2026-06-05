@@ -41,7 +41,6 @@ export default function DetalleSolicitud() {
         .then(({ data }) => {
           setProveedor(data);
           if (data) {
-            const id = window.location.pathname.split("/").pop();
             supabase.from("proposals").select("*").eq("request_id", id).eq("provider_slug", data.slug).single()
               .then(({ data: mp }) => setMiPropuesta(mp));
           }
@@ -75,9 +74,16 @@ export default function DetalleSolicitud() {
     if (!solicitud) return;
     if (!confirm("Confirmas que ya conseguiste lo que buscabas? La solicitud va a desaparecer del feed.")) return;
     setCerrando(true);
-    await supabase.from("requests").update({ status: "resolved" }).eq("id", solicitud.id);
-    setCerrando(false);
-    window.location.href = "/solicitudes";
+    const { error } = await supabase
+      .from("requests")
+      .update({ status: "resolved" })
+      .eq("id", solicitud.id);
+    if (!error) {
+      window.location.href = "/solicitudes";
+    } else {
+      console.error("Error:", error);
+      setCerrando(false);
+    }
   };
 
   const tiempoAtras = (fecha: string) => {
@@ -136,7 +142,7 @@ export default function DetalleSolicitud() {
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 mb-6 flex items-center justify-between">
             <div>
               <p className="font-black text-black text-sm">Ya conseguiste lo que buscabas?</p>
-              <p className="text-gray-500 text-xs mt-1">Cerrá la solicitud para que los proveedores no sigan enviando propuestas</p>
+              <p className="text-gray-500 text-xs mt-1">Cerrá la solicitud para que los proveedores no sigan perdiendo tiempo</p>
             </div>
             <button onClick={cerrarSolicitud} disabled={cerrando} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-5 py-2 rounded-xl text-sm transition-colors disabled:opacity-50">
               {cerrando ? "Cerrando..." : "Marcar como resuelta"}
