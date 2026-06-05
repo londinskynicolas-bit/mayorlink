@@ -39,10 +39,12 @@ export default function Busqueda() {
     setCargando(true);
     let query = supabase.from("providers").select("*").eq("status", "active");
     if (busqueda) {
-      query = query.or(`company_name.ilike.%${busqueda}%,description.ilike.%${busqueda}%,city.ilike.%${busqueda}%`);
+      query = query.or(
+        `company_name.ilike.%${busqueda}%,description.ilike.%${busqueda}%,city.ilike.%${busqueda}%,category.ilike.%${busqueda}%`
+      );
     }
     if (categoria !== "Todas") {
-      query = query.eq("category", categoria);
+      query = query.ilike("category", categoria);
     }
     if (provincia !== "Todas") {
       query = query.eq("province", provincia);
@@ -71,7 +73,7 @@ export default function Busqueda() {
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar proveedores, productos o ciudad..."
+              placeholder="Buscar por rubro, producto, empresa o ciudad..."
               className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"
             />
             <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-xl text-sm transition-colors">
@@ -114,6 +116,7 @@ export default function Busqueda() {
             <div className="text-center py-20">
               <div className="text-4xl mb-3">🔍</div>
               <div className="font-black text-gray-900">No encontramos proveedores</div>
+              <p className="text-gray-400 text-sm mt-2">Proba con otro termino o quitá los filtros</p>
               <button onClick={() => { setBusqueda(""); setCategoria("Todas"); setProvincia("Todas"); }} className="mt-4 text-emerald-600 text-sm underline font-bold">
                 Limpiar filtros
               </button>
@@ -138,7 +141,7 @@ export default function Busqueda() {
                           <div className="flex items-center gap-2 mb-1">
                             {p.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full">Verificado</span>}
                             {p.is_founder && <span className="text-xs bg-black text-white font-black px-2 py-0.5 rounded-full">Fundador</span>}
-                            {p.category && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">{p.category}</span>}
+                            {p.category && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full capitalize">{p.category}</span>}
                           </div>
                           <div className="text-lg font-black text-black">{p.company_name}</div>
                           <div className="text-sm text-gray-500">{p.city ? p.city + ", " : ""}{p.province}</div>
