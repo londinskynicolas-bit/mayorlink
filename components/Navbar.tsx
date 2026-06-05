@@ -1,8 +1,23 @@
 "use client";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const [esProveedor, setEsProveedor] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      supabase.from("providers").select("id").eq("email", session.user.email).single()
+        .then(({ data }) => setEsProveedor(!!data));
+    }
+  }, [session]);
 
   return (
     <nav className="bg-black px-6 py-4 flex items-center justify-between sticky top-0 z-50">
@@ -15,7 +30,9 @@ export default function Navbar() {
         <a href="/solicitudes" className="text-gray-300 text-sm font-medium hover:text-white hidden md:block">Solicitudes</a>
         {session ? (
           <div className="flex items-center gap-3">
-            <a href="/panel" className="text-gray-300 text-sm font-medium hover:text-white">Mi panel</a>
+            <a href={esProveedor ? "/panel" : "/panel-comprador"} className="text-gray-300 text-sm font-medium hover:text-white">
+              Mi panel
+            </a>
             <div className="flex items-center gap-2">
               {session.user?.image && (
                 <img src={session.user.image} alt="foto" className="w-8 h-8 rounded-full"/>
