@@ -63,6 +63,15 @@ export default function PerfilProveedor() {
     }).eq("slug", proveedor.slug);
   };
 
+  const iniciarChat = () => {
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+    const convId = [session.user?.email, proveedor.email].sort().join("_");
+    window.location.href = `/mensajes?conv=${convId}&con=${proveedor.email}`;
+  };
+
   const promedioRating = resenas.length > 0
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
     : null;
@@ -129,14 +138,12 @@ export default function PerfilProveedor() {
                     Contactar por WhatsApp
                   </a>
                 )}
+                <button onClick={iniciarChat} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-sm">
+                  💬 Enviar mensaje
+                </button>
                 {proveedor.instagram && (
                   <a href={"https://instagram.com/" + proveedor.instagram} target="_blank" className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-white transition-colors text-sm">
                     Instagram
-                  </a>
-                )}
-                {proveedor.email && (
-                  <a href={"mailto:" + proveedor.email} className="border-2 border-gray-600 text-white font-black px-6 py-3 rounded-xl hover:border-white transition-colors text-sm">
-                    Email
                   </a>
                 )}
                 {session && (
