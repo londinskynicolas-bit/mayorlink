@@ -11,14 +11,24 @@ const supabase = createClient(
 export default function PanelComprador() {
   const { data: session, status } = useSession();
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [favoritos, setFavoritos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") window.location.href = "/login";
     if (status === "authenticated" && session?.user?.email) {
-      supabase.from("requests").select("*").eq("buyer_email", session.user.email)
-        .order("created_at", { ascending: false })
-        .then(({ data }) => { setSolicitudes(data || []); setCargando(false); });
+      Promise.all([
+        supabase.from("requests").select("*").eq("buyer_email", session.user.email).order("created_at", { ascending: false }),
+        supabase.from("favorites").select("provider_slug").eq("buyer_email", session.user.email)
+      ]).then(async ([{ data: reqs }, { data: favs }]) => {
+        setSolicitudes(reqs || []);
+        if (favs && favs.length > 0) {
+          const slugs = favs.map(f => f.provider_slug);
+          const { data: provs } = await supabase.from("providers").select("*").in("slug", slugs);
+          setFavoritos(provs || []);
+        }
+        setCargando(false);
+      });
     }
   }, [status, session]);
 
@@ -50,7 +60,7 @@ export default function PanelComprador() {
           </a>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
             <div className="text-3xl font-black text-emerald-500">{activas.length}</div>
             <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Solicitudes activas</div>
@@ -60,10 +70,40 @@ export default function PanelComprador() {
             <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Propuestas recibidas</div>
           </div>
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
+            <div className="text-3xl font-black text-yellow-500">{favoritos.length}</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Favoritos</div>
+          </div>
+          <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
             <div className="text-3xl font-black text-gray-400">{resueltas.length}</div>
-            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Solicitudes resueltas</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wide mt-1">Resueltas</div>
           </div>
         </div>
+
+        {favoritos.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-black text-black uppercase tracking-tight mb-4">Proveedores guardados</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {favoritos.map((p) => (
+                <a key={p.id} href={"/proveedores/" + p.slug} className="bg-white border-2 border-gray-100 rounded-2xl p-4 hover:border-black transition-all flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                    {p.logo_url ? (
+                      <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                    ) : (
+                      <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-700">
+                        {p.company_name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-black text-black text-sm">{p.company_name}</div>
+                    <div className="text-xs text-gray-400 capitalize">{p.category} · {p.province}</div>
+                  </div>
+                  <span className="text-yellow-400 text-lg">❤️</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {solicitudes.length === 0 ? (
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-12 text-center">
