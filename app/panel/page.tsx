@@ -71,10 +71,10 @@ export default function Panel() {
           <div className="text-4xl mb-4">🏪</div>
           <h2 className="text-xl font-black text-black mb-2">Todavia no publicaste tu empresa</h2>
           <p className="text-gray-500 text-sm mb-6">Registra tu empresa y empieza a recibir consultas de comerciantes</p>
-          <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-xl transition-colors">
+          <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-3 rounded-xl transition-colors mb-4">
             Publicar mi empresa gratis
           </a>
-          <div className="mt-4">
+          <div>
             <a href="/panel-comprador" className="text-emerald-600 text-sm font-bold hover:underline">
               Ir a mi panel de comprador
             </a>
@@ -92,13 +92,16 @@ export default function Panel() {
           <a href="/" className="text-2xl font-black text-white tracking-tight block">MayorLink</a>
         </div>
         <div className="flex items-center gap-4">
+          <a href="/panel-comprador" className="text-emerald-400 text-xs font-bold hover:underline">
+            Panel de comprador
+          </a>
           <span className="text-gray-400 text-sm">{session?.user?.email}</span>
           <button onClick={() => signOut()} className="text-gray-400 text-sm hover:text-white">Salir</button>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-black text-black mb-8">Mi panel</h1>
+        <h1 className="text-3xl font-black text-black mb-8">Mi panel de proveedor</h1>
 
         <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 text-center">
@@ -161,7 +164,7 @@ export default function Panel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <a href="/mis-productos" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
             <div className="text-3xl mb-2">📦</div>
             <div className="font-black text-black text-sm">Mis productos</div>
@@ -176,6 +179,11 @@ export default function Panel() {
             <div className="text-3xl mb-2">📋</div>
             <div className="font-black text-black text-sm">Solicitudes</div>
             <div className="text-xs text-gray-400 mt-1">Ver oportunidades</div>
+          </a>
+          <a href="/panel-comprador" className="bg-white border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all text-center">
+            <div className="text-3xl mb-2">🛒</div>
+            <div className="font-black text-black text-sm">Soy comprador</div>
+            <div className="text-xs text-gray-400 mt-1">Panel de compras</div>
           </a>
         </div>
 
