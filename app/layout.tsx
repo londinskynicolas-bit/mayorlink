@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
+import AsistenteFlotante from "../components/AsistenteFlotante";
 
 export const metadata: Metadata = {
   title: "MayorLink | Directorio de proveedores mayoristas en Argentina",
@@ -27,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <AsistenteFlotante />
+        </Providers>
       </body>
     </html>
   );
