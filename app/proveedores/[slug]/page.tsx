@@ -125,12 +125,7 @@ export default function PerfilProveedor() {
               </div>
               <div className="flex gap-3 flex-wrap">
                 {proveedor.whatsapp && (
-                  
-                    href={"https://wa.me/" + proveedor.whatsapp}
-                    target="_blank"
-                    onClick={registrarClickWhatsApp}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm"
-                  >
+                  <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" onClick={registrarClickWhatsApp} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-6 py-3 rounded-xl transition-colors text-sm">
                     Contactar por WhatsApp
                   </a>
                 )}
@@ -233,12 +228,7 @@ export default function PerfilProveedor() {
                     </div>
                     <div className="mt-auto">
                       {proveedor.whatsapp && (
-                        
-                          href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name}
-                          target="_blank"
-                          onClick={registrarClickWhatsApp}
-                          className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm py-3 rounded-xl text-center transition-colors"
-                        >
+                        <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa el producto: " + p.name} target="_blank" onClick={registrarClickWhatsApp} className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm py-3 rounded-xl text-center transition-colors">
                           Consultar por WhatsApp
                         </a>
                       )}
