@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useSession } from "next-auth/react";
 import Navbar from "../components/Navbar";
 
 const supabase = createClient(
@@ -9,17 +10,22 @@ const supabase = createClient(
 );
 
 export default function Home() {
+  const { data: session } = useSession();
   const [busqueda, setBusqueda] = useState("");
   const [proveedores, setProveedores] = useState<any[]>([]);
+  const [esProveedor, setEsProveedor] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("providers")
-      .select("*")
-      .eq("status", "active")
-      .limit(4)
+    supabase.from("providers").select("*").eq("status", "active").limit(4)
       .then(({ data }) => setProveedores(data || []));
   }, []);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      supabase.from("providers").select("id").eq("email", session.user.email).single()
+        .then(({ data }) => setEsProveedor(!!data));
+    }
+  }, [session]);
 
   const buscar = () => {
     if (busqueda.trim()) {
@@ -97,7 +103,7 @@ export default function Home() {
               { nombre: "Deportes", emoji: "⚽" },
               { nombre: "Calzado", emoji: "👟" },
             ].map((cat) => (
-              <a key={cat.nombre} href={"/busqueda?q=" + cat.nombre} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
+              <a key={cat.nombre} href={"/busqueda?q=" + cat.nombre.toLowerCase()} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
                 <div className="text-3xl mb-2">{cat.emoji}</div>
                 <div className="text-sm font-black text-black">{cat.nombre}</div>
                 <div className="text-xs text-emerald-600 font-bold mt-1">Ver proveedores</div>
@@ -157,11 +163,23 @@ export default function Home() {
 
       <section className="bg-black px-6 py-16 text-center">
         <h2 className="text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
-        <p className="text-gray-400 mb-8 max-w-md mx-auto">Publica tu empresa gratis y empieza a recibir consultas de comerciantes de todo el pais</p>
-        <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
-          Publicar mi empresa gratis
-        </a>
-        <p className="text-gray-600 text-xs mt-4">Los primeros 100 proveedores obtienen el badge de Fundador permanente</p>
+        <p className="text-gray-400 mb-8 max-w-md mx-auto">
+          {session && esProveedor
+            ? "Gestioná tu empresa, productos y solicitudes desde tu panel."
+            : "Publica tu empresa gratis y empieza a recibir consultas de comerciantes de todo el pais."}
+        </p>
+        {session && esProveedor ? (
+          <a href="/panel" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
+            Ir a mi panel
+          </a>
+        ) : (
+          <a href="/registro-proveedor" className="inline-block bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-lg transition-colors">
+            Publicar mi empresa gratis
+          </a>
+        )}
+        {!session && (
+          <p className="text-gray-600 text-xs mt-4">Los primeros 100 proveedores obtienen el badge de Fundador permanente</p>
+        )}
       </section>
     </div>
   );
