@@ -39,32 +39,33 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <section className="bg-black text-white px-6 py-20">
+      {/* HERO */}
+      <section className="bg-black text-white px-4 md:px-6 py-12 md:py-20">
         <div className="max-w-4xl mx-auto">
-          <div className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-4">Venta mayorista B2B en Argentina</div>
-          <h1 className="text-6xl font-black leading-none mb-4 tracking-tight">
+          <div className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3">Venta mayorista B2B en Argentina</div>
+          <h1 className="text-4xl md:text-6xl font-black leading-none mb-4 tracking-tight">
             Encontra proveedores<br />
             <span className="text-emerald-400">mayoristas</span><br />
             en todo el pais
           </h1>
-          <p className="text-gray-400 text-lg mb-10 max-w-xl">
+          <p className="text-gray-400 text-base md:text-lg mb-8 max-w-xl">
             Busca por producto, rubro o provincia. Compara condiciones y contacta directo por WhatsApp.
           </p>
-          <div className="flex gap-0 max-w-2xl bg-white rounded-xl overflow-hidden">
+          <div className="flex max-w-2xl bg-white rounded-xl overflow-hidden">
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && buscar()}
-              placeholder="Que producto buscas? Ej: indumentaria, electronica..."
-              className="flex-1 px-5 py-4 text-gray-900 text-sm focus:outline-none"
+              placeholder="Ej: indumentaria, electronica..."
+              className="flex-1 px-4 py-3 text-gray-900 text-sm focus:outline-none"
             />
-            <button onClick={buscar} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 text-sm transition-colors">
+            <button onClick={buscar} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-5 md:px-8 py-3 text-sm transition-colors whitespace-nowrap">
               Buscar
             </button>
           </div>
-          <div className="flex gap-3 mt-4">
-            {["indumentaria", "electronica", "cosmetica", "ferreteria", "calzado"].map((t) => (
+          <div className="flex gap-3 mt-3 flex-wrap">
+            {["indumentaria", "electronica", "cosmetica", "ferreteria"].map((t) => (
               <a key={t} href={`/proveedores-categoria/${t}/todas`} className="text-xs text-gray-500 hover:text-emerald-400 transition-colors underline">
                 {t}
               </a>
@@ -73,26 +74,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-emerald-500 px-6 py-5">
-        <div className="max-w-4xl mx-auto grid grid-cols-4 gap-4">
+      {/* STATS */}
+      <section className="bg-emerald-500 px-4 md:px-6 py-4">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { num: "10.000+", label: "Proveedores" },
             { num: "50.000+", label: "Compradores" },
             { num: "20", label: "Categorias" },
-            { num: "100%", label: "Gratis para buscar" },
+            { num: "100%", label: "Gratis" },
           ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl font-black text-black">{s.num}</div>
+            <div key={s.label} className="text-center py-1">
+              <div className="text-xl md:text-2xl font-black text-black">{s.num}</div>
               <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="bg-gray-50 px-6 py-12">
+      {/* CATEGORIAS */}
+      <section className="bg-gray-50 px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-black text-black uppercase tracking-tight mb-6">Categorias</h2>
-          <div className="grid grid-cols-4 gap-3">
+          <h2 className="text-lg md:text-xl font-black text-black uppercase tracking-tight mb-4">Categorias</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { nombre: "Indumentaria", emoji: "👕", slug: "indumentaria" },
               { nombre: "Electronica", emoji: "📱", slug: "electronica" },
@@ -103,32 +106,33 @@ export default function Home() {
               { nombre: "Deportes", emoji: "⚽", slug: "deportes" },
               { nombre: "Calzado", emoji: "👟", slug: "calzado" },
             ].map((cat) => (
-              <a key={cat.nombre} href={`/proveedores-categoria/${cat.slug}/todas`} className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-black transition-all cursor-pointer">
-                <div className="text-3xl mb-2">{cat.emoji}</div>
-                <div className="text-sm font-black text-black">{cat.nombre}</div>
-                <div className="text-xs text-emerald-600 font-bold mt-1">Ver proveedores</div>
+              <a key={cat.nombre} href={`/proveedores-categoria/${cat.slug}/todas`} className="bg-white border-2 border-gray-100 rounded-xl p-3 md:p-4 text-center hover:border-black transition-all">
+                <div className="text-2xl md:text-3xl mb-1 md:mb-2">{cat.emoji}</div>
+                <div className="text-xs md:text-sm font-black text-black">{cat.nombre}</div>
+                <div className="text-xs text-emerald-600 font-bold mt-1 hidden md:block">Ver proveedores</div>
               </a>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-12">
+      {/* PROVEEDORES DESTACADOS */}
+      <section className="px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-black uppercase tracking-tight">Proveedores destacados</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg md:text-xl font-black text-black uppercase tracking-tight">Proveedores destacados</h2>
             <a href="/busqueda" className="text-emerald-600 text-sm font-black hover:underline">Ver todos</a>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {proveedores.map((p) => (
-              <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:border-black transition-all">
+              <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-black transition-all">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden flex-shrink-0">
                       {p.logo_url ? (
                         <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
                       ) : (
-                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-base font-black text-emerald-700">
+                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-sm font-black text-emerald-700">
                           {p.company_name.slice(0, 2).toUpperCase()}
                         </div>
                       )}
@@ -161,10 +165,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-gray-50 px-6 py-10">
+      {/* BUSCA POR PROVINCIA */}
+      <section className="bg-gray-50 px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-black text-black uppercase tracking-tight mb-6">Busca por provincia</h2>
-          <div className="grid grid-cols-6 gap-2">
+          <h2 className="text-lg md:text-xl font-black text-black uppercase tracking-tight mb-4">Busca por provincia</h2>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
             {[
               { nombre: "Buenos Aires", slug: "buenos-aires" },
               { nombre: "CABA", slug: "caba" },
@@ -179,7 +184,7 @@ export default function Home() {
               { nombre: "Corrientes", slug: "corrientes" },
               { nombre: "Misiones", slug: "misiones" },
             ].map((prov) => (
-              <a key={prov.slug} href={`/proveedores-categoria/todas/${prov.slug}`} className="bg-white border-2 border-gray-100 rounded-xl px-3 py-2 text-center hover:border-black transition-all">
+              <a key={prov.slug} href={`/proveedores-categoria/todas/${prov.slug}`} className="bg-white border-2 border-gray-100 rounded-xl px-2 py-2 text-center hover:border-black transition-all">
                 <div className="text-xs font-black text-black">{prov.nombre}</div>
               </a>
             ))}
@@ -187,9 +192,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-black px-6 py-16 text-center">
-        <h2 className="text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
-        <p className="text-gray-400 mb-8 max-w-md mx-auto">
+      {/* CTA */}
+      <section className="bg-black px-4 md:px-6 py-12 md:py-16 text-center">
+        <h2 className="text-2xl md:text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
+        <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm md:text-base">
           {session && esProveedor
             ? "Gestioná tu empresa, productos y solicitudes desde tu panel."
             : "Publica tu empresa gratis y empieza a recibir consultas de comerciantes de todo el pais."}
