@@ -14,10 +14,27 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState("");
   const [proveedores, setProveedores] = useState<any[]>([]);
   const [esProveedor, setEsProveedor] = useState(false);
+  const [stats, setStats] = useState({
+    proveedores: 0,
+    solicitudesActivas: 0,
+    propuestas: 0,
+  });
 
   useEffect(() => {
     supabase.from("providers").select("*").eq("status", "active").limit(4)
       .then(({ data }) => setProveedores(data || []));
+
+    Promise.all([
+      supabase.from("providers").select("id", { count: "exact" }).eq("status", "active"),
+      supabase.from("requests").select("id", { count: "exact" }).eq("status", "active"),
+      supabase.from("proposals").select("id", { count: "exact" }),
+    ]).then(([{ count: p }, { count: s }, { count: prop }]) => {
+      setStats({
+        proveedores: p || 0,
+        solicitudesActivas: s || 0,
+        propuestas: prop || 0,
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -39,10 +56,9 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* HERO */}
       <section className="bg-black text-white px-4 md:px-6 py-12 md:py-20">
         <div className="max-w-4xl mx-auto">
-          <div className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3">Venta mayorista B2B en Argentina</div>
+          <div className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-4">Venta mayorista B2B en Argentina</div>
           <h1 className="text-4xl md:text-6xl font-black leading-none mb-4 tracking-tight">
             Encontra proveedores<br />
             <span className="text-emerald-400">mayoristas</span><br />
@@ -74,24 +90,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* CONTADOR DE ACTIVIDAD REAL */}
       <section className="bg-emerald-500 px-4 md:px-6 py-4">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { num: "10.000+", label: "Proveedores" },
-            { num: "50.000+", label: "Compradores" },
-            { num: "20", label: "Categorias" },
-            { num: "100%", label: "Gratis" },
-          ].map((s) => (
-            <div key={s.label} className="text-center py-1">
-              <div className="text-xl md:text-2xl font-black text-black">{s.num}</div>
-              <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">{s.label}</div>
-            </div>
-          ))}
+          <div className="text-center py-1">
+            <div className="text-xl md:text-2xl font-black text-black">{stats.proveedores}</div>
+            <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">Proveedores</div>
+          </div>
+          <div className="text-center py-1">
+            <div className="text-xl md:text-2xl font-black text-black">{stats.solicitudesActivas}</div>
+            <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">Solicitudes activas</div>
+          </div>
+          <div className="text-center py-1">
+            <div className="text-xl md:text-2xl font-black text-black">{stats.propuestas}</div>
+            <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">Propuestas enviadas</div>
+          </div>
+          <div className="text-center py-1">
+            <div className="text-xl md:text-2xl font-black text-black">100%</div>
+            <div className="text-xs font-bold text-black opacity-60 uppercase tracking-wide">Gratis</div>
+          </div>
         </div>
       </section>
 
-      {/* CATEGORIAS */}
       <section className="bg-gray-50 px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-lg md:text-xl font-black text-black uppercase tracking-tight mb-4">Categorias</h2>
@@ -116,7 +136,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PROVEEDORES DESTACADOS */}
       <section className="px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
@@ -165,7 +184,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BUSCA POR PROVINCIA */}
       <section className="bg-gray-50 px-4 md:px-6 py-10">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-lg md:text-xl font-black text-black uppercase tracking-tight mb-4">Busca por provincia</h2>
@@ -192,7 +210,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="bg-black px-4 md:px-6 py-12 md:py-16 text-center">
         <h2 className="text-2xl md:text-3xl font-black text-white mb-3">Sos proveedor mayorista?</h2>
         <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm md:text-base">
