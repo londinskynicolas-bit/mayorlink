@@ -69,6 +69,15 @@ export default function PerfilProveedor() {
     window.location.href = `/mensajes?conv=${convId}&con=${proveedor.email}`;
   };
 
+  const nombreComprador = session?.user?.name || "un comprador";
+
+  const mensajeWhatsApp = (nombreProducto?: string) => {
+    if (nombreProducto) {
+      return encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa el producto: ${nombreProducto}. Podemos hablar?`);
+    }
+    return encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`);
+  };
+
   const promedioRating = resenas.length > 0
     ? (resenas.reduce((acc, r) => acc + r.rating, 0) / resenas.length).toFixed(1)
     : null;
@@ -122,10 +131,16 @@ export default function PerfilProveedor() {
                   </div>
                 )}
                 {proveedor.views_count > 0 && <span className="text-emerald-400 text-xs font-bold">{proveedor.views_count} visitas</span>}
+                {proveedor.whatsapp_clicks > 0 && <span className="text-emerald-400 text-xs font-bold">{proveedor.whatsapp_clicks} contactos WA</span>}
               </div>
               <div className="flex gap-2 flex-wrap">
                 {proveedor.whatsapp && (
-                  <a href={"https://wa.me/" + proveedor.whatsapp} target="_blank" onClick={registrarClickWhatsApp} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm">
+                  
+                    href={`https://wa.me/${proveedor.whatsapp}?text=${mensajeWhatsApp()}`}
+                    target="_blank"
+                    onClick={registrarClickWhatsApp}
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm"
+                  >
                     WhatsApp
                   </a>
                 )}
@@ -138,11 +153,11 @@ export default function PerfilProveedor() {
                   </button>
                 )}
                 {proveedor.instagram && (
-                  <a href={"https://instagram.com/" + proveedor.instagram} target="_blank" className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-white transition-colors text-xs md:text-sm">
+                  <a href={`https://instagram.com/${proveedor.instagram}`} target="_blank" className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-white transition-colors text-xs md:text-sm">
                     IG
                   </a>
                 )}
-                <a href={"/resena?proveedor=" + proveedor.slug} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
+                <a href={`/resena?proveedor=${proveedor.slug}`} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
                   Reseña
                 </a>
               </div>
@@ -226,12 +241,30 @@ export default function PerfilProveedor() {
                     </div>
                     <div className="mt-auto">
                       {proveedor.whatsapp && (
-                        <a href={"https://wa.me/" + proveedor.whatsapp + "?text=Hola, me interesa: " + p.name} target="_blank" onClick={registrarClickWhatsApp} className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
+                        
+                          href={`https://wa.me/${proveedor.whatsapp}?text=${mensajeWhatsApp(p.name)}`}
+                          target="_blank"
+                          onClick={registrarClickWhatsApp}
+                          className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors"
+                        >
                           Consultar por WhatsApp
                         </a>
                       )}
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {productos.length === 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-black text-black uppercase tracking-tight mb-4">Galeria</h2>
+            <div className="grid grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                  <span className="text-xs text-gray-400 font-bold">FOTO {n}</span>
                 </div>
               ))}
             </div>
@@ -244,12 +277,12 @@ export default function PerfilProveedor() {
               Resenas {promedioRating && <span className="text-yellow-500">{promedioRating} ⭐</span>}
               <span className="ml-2 text-sm font-normal text-gray-400 normal-case">({resenas.length})</span>
             </h2>
-            <a href={"/resena?proveedor=" + proveedor.slug} className="text-emerald-600 text-xs font-bold hover:underline">Dejar resena</a>
+            <a href={`/resena?proveedor=${proveedor.slug}`} className="text-emerald-600 text-xs font-bold hover:underline">Dejar resena</a>
           </div>
           {resenas.length === 0 ? (
             <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center">
               <p className="text-gray-400 text-sm font-bold mb-3">Todavia no hay resenas</p>
-              <a href={"/resena?proveedor=" + proveedor.slug} className="inline-block bg-emerald-500 text-black font-black px-5 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
+              <a href={`/resena?proveedor=${proveedor.slug}`} className="inline-block bg-emerald-500 text-black font-black px-5 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
                 Dejar resena
               </a>
             </div>
