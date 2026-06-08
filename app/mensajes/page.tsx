@@ -16,6 +16,7 @@ export default function Mensajes() {
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [cargando, setCargando] = useState(true);
+  const [vistaMovil, setVistaMovil] = useState<"lista" | "chat">("lista");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function Mensajes() {
         if (convId && conEmail) {
           const conv = { id: convId, otroEmail: conEmail, ultimoMensaje: "", noLeidos: 0 };
           abrirConversacion(conv);
+          setVistaMovil("chat");
         }
       });
     }
@@ -50,17 +52,9 @@ export default function Mensajes() {
       const otroEmail = m.sender_email === email ? m.receiver_email : m.sender_email;
       const convId = m.conversation_id;
       if (!convMap[convId]) {
-        convMap[convId] = {
-          id: convId,
-          otroEmail,
-          ultimoMensaje: m.content,
-          fecha: m.created_at,
-          noLeidos: 0,
-        };
+        convMap[convId] = { id: convId, otroEmail, ultimoMensaje: m.content, fecha: m.created_at, noLeidos: 0 };
       }
-      if (!m.read && m.receiver_email === email) {
-        convMap[convId].noLeidos++;
-      }
+      if (!m.read && m.receiver_email === email) convMap[convId].noLeidos++;
     });
 
     setConversaciones(Object.values(convMap));
@@ -69,16 +63,11 @@ export default function Mensajes() {
 
   const abrirConversacion = async (conv: any) => {
     setConversacionActiva(conv);
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", conv.id)
-      .order("created_at", { ascending: true });
+    setVistaMovil("chat");
+    const { data } = await supabase.from("messages").select("*").eq("conversation_id", conv.id).order("created_at", { ascending: true });
     setMensajes(data || []);
     if (session?.user?.email) {
-      await supabase.from("messages").update({ read: true })
-        .eq("conversation_id", conv.id)
-        .eq("receiver_email", session.user.email);
+      await supabase.from("messages").update({ read: true }).eq("conversation_id", conv.id).eq("receiver_email", session.user.email);
     }
   };
 
@@ -94,10 +83,11 @@ export default function Mensajes() {
     const { data } = await supabase.from("messages").insert(mensaje).select().single();
     if (data) {
       setMensajes(prev => [...prev, data]);
-      setConversaciones(prev => prev.map(c => c.id === conversacionActiva.id ? { ...c, ultimoMensaje: input.trim() } : c));
-      if (!conversaciones.find(c => c.id === conversacionActiva.id)) {
-        setConversaciones(prev => [conversacionActiva, ...prev]);
-      }
+      setConversaciones(prev => {
+        const existe = prev.find(c => c.id === conversacionActiva.id);
+        if (existe) return prev.map(c => c.id === conversacionActiva.id ? { ...c, ultimoMensaje: input.trim() } : c);
+        return [{ ...conversacionActiva, ultimoMensaje: input.trim() }, ...prev];
+      });
     }
     setInput("");
   };
@@ -109,11 +99,14 @@ export default function Mensajes() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <div className="max-w-5xl mx-auto w-full px-6 py-8 flex-1 flex flex-col">
-        <h1 className="text-3xl font-black text-black mb-6">Mensajes</h1>
+
+      <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 flex-1 flex flex-col">
+        <h1 className="text-2xl md:text-3xl font-black text-black mb-4 md:mb-6">Mensajes</h1>
 
         <div className="flex gap-4 flex-1" style={{minHeight: "500px"}}>
-          <div className="w-72 flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex flex-col">
+
+          {/* Lista de conversaciones */}
+          <div className={`${vistaMovil === "chat" ? "hidden md:flex" : "flex"} md:flex w-full md:w-72 flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex-col`}>
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="font-black text-black text-sm uppercase tracking-wide">Conversaciones</h2>
             </div>
@@ -121,7 +114,7 @@ export default function Mensajes() {
               {conversaciones.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-gray-400 text-sm font-bold">No hay conversaciones</p>
-                  <p className="text-gray-400 text-xs mt-1">Entra al perfil de un proveedor y toca "Enviar mensaje"</p>
+                  <p className="text-gray-400 text-xs mt-1">Entra al perfil de un proveedor y toca "Mensaje"</p>
                 </div>
               ) : (
                 conversaciones.map((conv) => (
@@ -139,31 +132,35 @@ export default function Mensajes() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex flex-col">
+          {/* Chat activo */}
+          <div className={`${vistaMovil === "lista" ? "hidden md:flex" : "flex"} md:flex flex-1 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex-col`}>
             {!conversacionActiva ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-4xl mb-3">💬</div>
-                  <p className="text-gray-400 font-bold">Seleccioná una conversación</p>
-                  <p className="text-gray-400 text-sm mt-1">o iniciá una desde el perfil de un proveedor</p>
+                  <p className="text-gray-400 font-bold text-sm">Selecciona una conversacion</p>
+                  <p className="text-gray-400 text-xs mt-1">o inicia una desde el perfil de un proveedor</p>
                 </div>
               </div>
             ) : (
               <>
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-                  <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-sm font-black text-emerald-700">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                  <button onClick={() => { setVistaMovil("lista"); setConversacionActiva(null); }} className="md:hidden text-gray-400 hover:text-black mr-1">
+                    ←
+                  </button>
+                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-sm font-black text-emerald-700 flex-shrink-0">
                     {conversacionActiva.otroEmail[0].toUpperCase()}
                   </div>
-                  <div>
-                    <div className="font-black text-black text-sm">{conversacionActiva.otroEmail.split("@")[0]}</div>
-                    <div className="text-xs text-gray-400">{conversacionActiva.otroEmail}</div>
+                  <div className="min-w-0">
+                    <div className="font-black text-black text-sm truncate">{conversacionActiva.otroEmail.split("@")[0]}</div>
+                    <div className="text-xs text-gray-400 truncate">{conversacionActiva.otroEmail}</div>
                   </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
                   {mensajes.length === 0 && (
                     <div className="text-center py-8">
-                      <p className="text-gray-400 text-sm">Iniciá la conversación enviando un mensaje</p>
+                      <p className="text-gray-400 text-sm">Inicia la conversacion enviando un mensaje</p>
                     </div>
                   )}
                   {mensajes.map((m) => (
@@ -179,7 +176,7 @@ export default function Mensajes() {
                   <div ref={bottomRef}/>
                 </div>
 
-                <div className="px-4 py-3 border-t border-gray-100 flex gap-3">
+                <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
                   <input
                     type="text"
                     value={input}
@@ -188,7 +185,7 @@ export default function Mensajes() {
                     placeholder="Escribi tu mensaje..."
                     className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-black"
                   />
-                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-5 py-2 rounded-xl transition-colors disabled:opacity-50">
+                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors disabled:opacity-50 text-sm">
                     →
                   </button>
                 </div>
