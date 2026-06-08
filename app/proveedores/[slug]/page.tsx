@@ -63,19 +63,24 @@ export default function PerfilProveedor() {
     }).eq("slug", proveedor.slug);
   };
 
+  const abrirWhatsApp = (nombreProducto?: string) => {
+    if (!proveedor?.whatsapp) return;
+    const nombre = session?.user?.name || "un comprador";
+    const empresa = proveedor.company_name;
+    let msg = "";
+    if (nombreProducto) {
+      msg = `Hola ${empresa}! Soy ${nombre} y vi tu perfil en MayorLink. Me interesa el producto: ${nombreProducto}. Podemos hablar?`;
+    } else {
+      msg = `Hola ${empresa}! Soy ${nombre} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`;
+    }
+    registrarClickWhatsApp();
+    window.open(`https://wa.me/${proveedor.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
   const iniciarChat = () => {
     if (!session) { window.location.href = "/login"; return; }
     const convId = [session.user?.email, proveedor.email].sort().join("_");
     window.location.href = `/mensajes?conv=${convId}&con=${proveedor.email}`;
-  };
-
-  const nombreComprador = session?.user?.name || "un comprador";
-
-  const mensajeWhatsApp = (nombreProducto?: string) => {
-    if (nombreProducto) {
-      return encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa el producto: ${nombreProducto}. Podemos hablar?`);
-    }
-    return encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`);
   };
 
   const promedioRating = resenas.length > 0
@@ -135,14 +140,12 @@ export default function PerfilProveedor() {
               </div>
               <div className="flex gap-2 flex-wrap">
                 {proveedor.whatsapp && (
-                  
-                    href={`https://wa.me/${proveedor.whatsapp}?text=${mensajeWhatsApp()}`}
-                    target="_blank"
-                    onClick={registrarClickWhatsApp}
+                  <button
+                    onClick={() => abrirWhatsApp()}
                     className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm"
                   >
                     WhatsApp
-                  </a>
+                  </button>
                 )}
                 <button onClick={iniciarChat} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
                   💬 Mensaje
@@ -241,14 +244,12 @@ export default function PerfilProveedor() {
                     </div>
                     <div className="mt-auto">
                       {proveedor.whatsapp && (
-                        
-                          href={`https://wa.me/${proveedor.whatsapp}?text=${mensajeWhatsApp(p.name)}`}
-                          target="_blank"
-                          onClick={registrarClickWhatsApp}
+                        <button
+                          onClick={() => abrirWhatsApp(p.name)}
                           className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors"
                         >
                           Consultar por WhatsApp
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
