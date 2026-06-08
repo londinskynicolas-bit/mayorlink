@@ -63,20 +63,6 @@ export default function PerfilProveedor() {
     }).eq("slug", proveedor.slug);
   };
 
-  const abrirWhatsApp = (nombreProducto?: string) => {
-    if (!proveedor?.whatsapp) return;
-    const nombre = session?.user?.name || "un comprador";
-    const empresa = proveedor.company_name;
-    let msg = "";
-    if (nombreProducto) {
-      msg = `Hola ${empresa}! Soy ${nombre} y vi tu perfil en MayorLink. Me interesa el producto: ${nombreProducto}. Podemos hablar?`;
-    } else {
-      msg = `Hola ${empresa}! Soy ${nombre} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`;
-    }
-    registrarClickWhatsApp();
-    window.open(`https://wa.me/${proveedor.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
   const iniciarChat = () => {
     if (!session) { window.location.href = "/login"; return; }
     const convId = [session.user?.email, proveedor.email].sort().join("_");
@@ -102,6 +88,9 @@ export default function PerfilProveedor() {
       </div>
     );
   }
+
+  const nombreComprador = session?.user?.name || "un comprador";
+  const msgPerfil = encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`);
 
   return (
     <div className="min-h-screen bg-white">
@@ -140,12 +129,14 @@ export default function PerfilProveedor() {
               </div>
               <div className="flex gap-2 flex-wrap">
                 {proveedor.whatsapp && (
-                  <button
-                    onClick={() => abrirWhatsApp()}
+                  
+                    href={`https://wa.me/${proveedor.whatsapp}?text=${msgPerfil}`}
+                    target="_blank"
+                    onClick={registrarClickWhatsApp}
                     className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm"
                   >
                     WhatsApp
-                  </button>
+                  </a>
                 )}
                 <button onClick={iniciarChat} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
                   💬 Mensaje
@@ -205,56 +196,61 @@ export default function PerfilProveedor() {
               <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{productos.length} productos</span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {productos.map((p) => (
-                <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
-                  {p.images && p.images.length > 0 ? (
-                    <div className="relative">
-                      <img src={p.images[fotoActiva[p.id] || 0]} alt={p.name} className="w-full aspect-video object-cover"/>
-                      {p.images.length > 1 && (
-                        <>
-                          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                            {p.images.map((_: string, i: number) => (
-                              <button key={i} onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))} className={`w-2 h-2 rounded-full ${(fotoActiva[p.id] || 0) === i ? "bg-white" : "bg-white opacity-50"}`}/>
-                            ))}
-                          </div>
-                          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
-                            <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs">&lt;</button>
-                            <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.min(p.images.length - 1, (prev[p.id] || 0) + 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs">&gt;</button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                      <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
-                    </div>
-                  )}
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-black text-black mb-1 text-sm">{p.name}</h3>
-                    {p.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{p.description}</p>}
-                    <div className="flex gap-2 flex-wrap mb-2">
-                      {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Unidad: {p.price_unit}</span>}
-                      {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Docena: {p.price_dozen}</span>}
-                      {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">Caja: {p.price_box}</span>}
-                    </div>
-                    <div className="flex gap-2 text-xs text-gray-400 flex-wrap mb-3">
-                      {p.material && <span>Mat: {p.material}</span>}
-                      {p.measures && <span>· {p.measures}</span>}
-                      {p.stock && <span>· Stock: {p.stock}</span>}
-                    </div>
-                    <div className="mt-auto">
-                      {proveedor.whatsapp && (
-                        <button
-                          onClick={() => abrirWhatsApp(p.name)}
-                          className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors"
-                        >
-                          Consultar por WhatsApp
-                        </button>
-                      )}
+              {productos.map((p) => {
+                const msgProducto = encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa el producto: ${p.name}. Podemos hablar?`);
+                return (
+                  <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
+                    {p.images && p.images.length > 0 ? (
+                      <div className="relative">
+                        <img src={p.images[fotoActiva[p.id] || 0]} alt={p.name} className="w-full aspect-video object-cover"/>
+                        {p.images.length > 1 && (
+                          <>
+                            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                              {p.images.map((_: string, i: number) => (
+                                <button key={i} onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))} className={`w-2 h-2 rounded-full ${(fotoActiva[p.id] || 0) === i ? "bg-white" : "bg-white opacity-50"}`}/>
+                              ))}
+                            </div>
+                            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
+                              <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs">&lt;</button>
+                              <button onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: Math.min(p.images.length - 1, (prev[p.id] || 0) + 1) }))} className="w-7 h-7 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-xs">&gt;</button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
+                      </div>
+                    )}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-black text-black mb-1 text-sm">{p.name}</h3>
+                      {p.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{p.description}</p>}
+                      <div className="flex gap-2 flex-wrap mb-2">
+                        {p.price_unit && <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Unidad: {p.price_unit}</span>}
+                        {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Docena: {p.price_dozen}</span>}
+                        {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">Caja: {p.price_box}</span>}
+                      </div>
+                      <div className="flex gap-2 text-xs text-gray-400 flex-wrap mb-3">
+                        {p.material && <span>Mat: {p.material}</span>}
+                        {p.measures && <span>· {p.measures}</span>}
+                        {p.stock && <span>· Stock: {p.stock}</span>}
+                      </div>
+                      <div className="mt-auto">
+                        {proveedor.whatsapp && (
+                          
+                            href={`https://wa.me/${proveedor.whatsapp}?text=${msgProducto}`}
+                            target="_blank"
+                            onClick={registrarClickWhatsApp}
+                            className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors"
+                          >
+                            Consultar por WhatsApp
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
