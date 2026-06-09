@@ -29,7 +29,6 @@ export default function Mensajes() {
         if (convId && conEmail) {
           const conv = { id: convId, otroEmail: conEmail, ultimoMensaje: "", noLeidos: 0 };
           abrirConversacion(conv);
-          setVistaMovil("chat");
         }
       });
     }
@@ -64,10 +63,16 @@ export default function Mensajes() {
   const abrirConversacion = async (conv: any) => {
     setConversacionActiva(conv);
     setVistaMovil("chat");
-    const { data } = await supabase.from("messages").select("*").eq("conversation_id", conv.id).order("created_at", { ascending: true });
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conv.id)
+      .order("created_at", { ascending: true });
     setMensajes(data || []);
     if (session?.user?.email) {
-      await supabase.from("messages").update({ read: true }).eq("conversation_id", conv.id).eq("receiver_email", session.user.email);
+      await supabase.from("messages").update({ read: true })
+        .eq("conversation_id", conv.id)
+        .eq("receiver_email", session.user.email);
     }
   };
 
@@ -101,12 +106,13 @@ export default function Mensajes() {
       <Navbar />
 
       <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 flex-1 flex flex-col">
-        <h1 className="text-2xl md:text-3xl font-black text-black mb-4 md:mb-6">Mensajes</h1>
+        <h1 className="text-2xl md:text-3xl font-black text-black mb-4">Mensajes</h1>
 
-        <div className="flex gap-4 flex-1" style={{minHeight: "500px"}}>
+        {/* Mobile: lista o chat */}
+        <div className="flex-1 flex flex-col md:flex-row gap-4" style={{minHeight: "500px"}}>
 
-          {/* Lista de conversaciones */}
-          <div className={`${vistaMovil === "chat" ? "hidden md:flex" : "flex"} md:flex w-full md:w-72 flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex-col`}>
+          {/* Lista conversaciones — visible en mobile solo cuando vistaMovil === lista */}
+          <div className={`${vistaMovil === "chat" ? "hidden" : "flex"} md:flex flex-col w-full md:w-72 md:flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden`}>
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="font-black text-black text-sm uppercase tracking-wide">Conversaciones</h2>
             </div>
@@ -114,7 +120,7 @@ export default function Mensajes() {
               {conversaciones.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-gray-400 text-sm font-bold">No hay conversaciones</p>
-                  <p className="text-gray-400 text-xs mt-1">Entra al perfil de un proveedor y toca "Mensaje"</p>
+                  <p className="text-gray-400 text-xs mt-2">Entra al perfil de un proveedor y toca "Mensaje"</p>
                 </div>
               ) : (
                 conversaciones.map((conv) => (
@@ -132,11 +138,11 @@ export default function Mensajes() {
             </div>
           </div>
 
-          {/* Chat activo */}
-          <div className={`${vistaMovil === "lista" ? "hidden md:flex" : "flex"} md:flex flex-1 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex-col`}>
+          {/* Chat activo — visible en mobile solo cuando vistaMovil === chat */}
+          <div className={`${vistaMovil === "lista" ? "hidden" : "flex"} md:flex flex-1 flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden`}>
             {!conversacionActiva ? (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
+                <div className="text-center px-4">
                   <div className="text-4xl mb-3">💬</div>
                   <p className="text-gray-400 font-bold text-sm">Selecciona una conversacion</p>
                   <p className="text-gray-400 text-xs mt-1">o inicia una desde el perfil de un proveedor</p>
@@ -145,7 +151,10 @@ export default function Mensajes() {
             ) : (
               <>
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-                  <button onClick={() => { setVistaMovil("lista"); setConversacionActiva(null); }} className="md:hidden text-gray-400 hover:text-black mr-1">
+                  <button
+                    onClick={() => { setVistaMovil("lista"); setConversacionActiva(null); }}
+                    className="md:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:text-black font-black text-lg flex-shrink-0"
+                  >
                     ←
                   </button>
                   <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-sm font-black text-emerald-700 flex-shrink-0">
@@ -165,7 +174,7 @@ export default function Mensajes() {
                   )}
                   {mensajes.map((m) => (
                     <div key={m.id} className={`flex ${m.sender_email === session?.user?.email ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${m.sender_email === session?.user?.email ? "bg-black text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}>
+                      <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm break-words ${m.sender_email === session?.user?.email ? "bg-black text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}>
                         {m.content}
                         <div className="text-xs mt-1 opacity-50">
                           {new Date(m.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
@@ -185,7 +194,7 @@ export default function Mensajes() {
                     placeholder="Escribi tu mensaje..."
                     className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-black"
                   />
-                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors disabled:opacity-50 text-sm">
+                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
                     →
                   </button>
                 </div>
