@@ -101,18 +101,91 @@ export default function Mensajes() {
     return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
   }
 
+  if (vistaMovil === "chat" && conversacionActiva) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <div className="bg-black px-4 py-3 flex items-center gap-3">
+          <button onClick={() => { setVistaMovil("lista"); setConversacionActiva(null); }} className="text-white font-black text-lg w-8 h-8 flex items-center justify-center">←</button>
+          <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-sm font-black text-black flex-shrink-0">
+            {conversacionActiva.otroEmail[0].toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="font-black text-white text-sm truncate">{conversacionActiva.otroEmail.split("@")[0]}</div>
+            <div className="text-xs text-gray-400 truncate">{conversacionActiva.otroEmail}</div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-50">
+          {mensajes.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-400 text-sm">Inicia la conversacion enviando un mensaje</p>
+            </div>
+          )}
+          {mensajes.map((m) => (
+            <div key={m.id} className={`flex ${m.sender_email === session?.user?.email ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm break-words ${m.sender_email === session?.user?.email ? "bg-black text-white rounded-tr-sm" : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm"}`}>
+                {m.content}
+                <div className="text-xs mt-1 opacity-50">
+                  {new Date(m.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
+            </div>
+          ))}
+          <div ref={bottomRef}/>
+        </div>
+
+        <div className="px-4 py-3 border-t border-gray-100 flex gap-2 bg-white">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && enviar()}
+            placeholder="Escribi tu mensaje..."
+            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-black"
+          />
+          <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
+            →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-
       <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-4 md:py-8 flex-1 flex flex-col">
         <h1 className="text-2xl md:text-3xl font-black text-black mb-4">Mensajes</h1>
 
-        {/* Mobile: lista o chat */}
-        <div className="flex-1 flex flex-col md:flex-row gap-4" style={{minHeight: "500px"}}>
+        <div className="md:hidden flex flex-col flex-1 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h2 className="font-black text-black text-sm uppercase tracking-wide">Conversaciones</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {conversaciones.length === 0 ? (
+              <div className="p-6 text-center">
+                <div className="text-3xl mb-2">💬</div>
+                <p className="text-gray-400 text-sm font-bold">No hay conversaciones</p>
+                <p className="text-gray-400 text-xs mt-2">Entra al perfil de un proveedor y toca "Mensaje"</p>
+              </div>
+            ) : (
+              conversaciones.map((conv) => (
+                <button key={conv.id} onClick={() => abrirConversacion(conv)} className="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-black text-black text-sm truncate">{conv.otroEmail.split("@")[0]}</div>
+                    {conv.noLeidos > 0 && (
+                      <span className="bg-emerald-500 text-black text-xs font-black w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">{conv.noLeidos}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 truncate">{conv.ultimoMensaje}</div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
 
-          {/* Lista conversaciones — visible en mobile solo cuando vistaMovil === lista */}
-          <div className={`${vistaMovil === "chat" ? "hidden" : "flex"} md:flex flex-col w-full md:w-72 md:flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden`}>
+        <div className="hidden md:flex gap-4 flex-1">
+          <div className="w-72 flex-shrink-0 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="font-black text-black text-sm uppercase tracking-wide">Conversaciones</h2>
             </div>
@@ -120,7 +193,6 @@ export default function Mensajes() {
               {conversaciones.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="text-gray-400 text-sm font-bold">No hay conversaciones</p>
-                  <p className="text-gray-400 text-xs mt-2">Entra al perfil de un proveedor y toca "Mensaje"</p>
                 </div>
               ) : (
                 conversaciones.map((conv) => (
@@ -137,44 +209,29 @@ export default function Mensajes() {
               )}
             </div>
           </div>
-
-          {/* Chat activo — visible en mobile solo cuando vistaMovil === chat */}
-          <div className={`${vistaMovil === "lista" ? "hidden" : "flex"} md:flex flex-1 flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden`}>
+          <div className="flex-1 bg-white border-2 border-gray-100 rounded-2xl overflow-hidden flex flex-col">
             {!conversacionActiva ? (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center px-4">
+                <div className="text-center">
                   <div className="text-4xl mb-3">💬</div>
                   <p className="text-gray-400 font-bold text-sm">Selecciona una conversacion</p>
-                  <p className="text-gray-400 text-xs mt-1">o inicia una desde el perfil de un proveedor</p>
                 </div>
               </div>
             ) : (
               <>
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-                  <button
-                    onClick={() => { setVistaMovil("lista"); setConversacionActiva(null); }}
-                    className="md:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:text-black font-black text-lg flex-shrink-0"
-                  >
-                    ←
-                  </button>
-                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-sm font-black text-emerald-700 flex-shrink-0">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-sm font-black text-emerald-700">
                     {conversacionActiva.otroEmail[0].toUpperCase()}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-black text-black text-sm truncate">{conversacionActiva.otroEmail.split("@")[0]}</div>
-                    <div className="text-xs text-gray-400 truncate">{conversacionActiva.otroEmail}</div>
+                  <div>
+                    <div className="font-black text-black text-sm">{conversacionActiva.otroEmail.split("@")[0]}</div>
+                    <div className="text-xs text-gray-400">{conversacionActiva.otroEmail}</div>
                   </div>
                 </div>
-
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-                  {mensajes.length === 0 && (
-                    <div className="text-center py-8">
-                      <p className="text-gray-400 text-sm">Inicia la conversacion enviando un mensaje</p>
-                    </div>
-                  )}
                   {mensajes.map((m) => (
                     <div key={m.id} className={`flex ${m.sender_email === session?.user?.email ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm break-words ${m.sender_email === session?.user?.email ? "bg-black text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}>
+                      <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${m.sender_email === session?.user?.email ? "bg-black text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}>
                         {m.content}
                         <div className="text-xs mt-1 opacity-50">
                           {new Date(m.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
@@ -184,19 +241,9 @@ export default function Mensajes() {
                   ))}
                   <div ref={bottomRef}/>
                 </div>
-
-                <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && enviar()}
-                    placeholder="Escribi tu mensaje..."
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-black"
-                  />
-                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors disabled:opacity-50">
-                    →
-                  </button>
+                <div className="px-4 py-3 border-t border-gray-100 flex gap-3">
+                  <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && enviar()} placeholder="Escribi tu mensaje..." className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-black"/>
+                  <button onClick={enviar} disabled={!input.trim()} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-5 py-2 rounded-xl transition-colors disabled:opacity-50">→</button>
                 </div>
               </>
             )}
