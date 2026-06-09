@@ -1,21 +1,14 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
+import { PROVINCIAS_AR, CIUDADES_POR_PROVINCIA } from "../../hooks/useLocalidades";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-const PROVINCIAS = [
-  "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut",
-  "Cordoba", "Corrientes", "Entre Rios", "Formosa", "Jujuy",
-  "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquen",
-  "Rio Negro", "Salta", "San Juan", "San Luis", "Santa Cruz",
-  "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucuman"
-];
 
 const CATEGORIAS = [
   "Indumentaria", "Calzado", "Electronica", "Alimentos", "Bebidas",
@@ -32,22 +25,14 @@ const METODOS_PAGO = [
 export default function EditarPerfil() {
   const { data: session, status } = useSession();
   const [proveedor, setProveedor] = useState<any>(null);
-  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
-  const [subiendoLogo, setSubiendoLogo] = useState(false);
   const [metodosPago, setMetodosPago] = useState<string[]>([]);
-  const logoRef = useRef<HTMLInputElement>(null);
+  const [score, setScore] = useState(0);
+  const [ciudades, setCiudades] = useState<string[]>([]);
   const [form, setForm] = useState({
-    company_name: "",
-    description: "",
-    category: "",
-    province: "",
-    city: "",
-    whatsapp: "",
-    instagram: "",
-    email: "",
-    min_order: "",
+    company_name: "", description: "", category: "", province: "",
+    city: "", whatsapp: "", instagram: "", min_order: "",
     shipping_info: "",
   });
 
@@ -66,19 +51,38 @@ export default function EditarPerfil() {
             city: data.city || "",
             whatsapp: data.whatsapp || "",
             instagram: data.instagram || "",
-            email: data.email || "",
             min_order: data.min_order || "",
             shipping_info: data.shipping_info || "",
           });
-          if (data.payment_methods) {
-            setMetodosPago(data.payment_methods.split(", ").filter(Boolean));
+          setMetodosPago(data.payment_methods ? data.payment_methods.split(", ") : []);
+          if (data.province) {
+            setCiudades(CIUDADES_POR_PROVINCIA[data.province] || []);
           }
-          setCargando(false);
         });
     }
   }, [status, session]);
 
-  const actualizar = (campo: string, valor: string) => setForm((prev) => ({ ...prev, [campo]: valor }));
+  useEffect(() => {
+    let s = 0;
+    if (form.company_name) s += 15;
+    if (form.description) s += 20;
+    if (form.category) s += 10;
+    if (form.province) s += 10;
+    if (form.whatsapp) s += 15;
+    if (form.instagram) s += 5;
+    if (form.min_order) s += 10;
+    if (metodosPago.length > 0) s += 10;
+    if (form.shipping_info) s += 5;
+    setScore(s);
+  }, [form, metodosPago]);
+
+  const actualizar = (campo: string, valor: string) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (campo === "province") {
+      setCiudades(CIUDADES_POR_PROVINCIA[valor] || []);
+      setForm((prev) => ({ ...prev, province: valor, city: "" }));
+    }
+  };
 
   const togglePago = (metodo: string) => {
     setMetodosPago((prev) =>
@@ -86,98 +90,58 @@ export default function EditarPerfil() {
     );
   };
 
-  const subirLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !proveedor) return;
-    setSubiendoLogo(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    const data = await res.json();
-    if (data.url) {
-      await supabase.from("providers").update({ logo_url: data.url }).eq("id", proveedor.id);
-      setProveedor((prev: any) => ({ ...prev, logo_url: data.url }));
-    }
-    setSubiendoLogo(false);
-  };
-
-  const calcularScore = (f = form, mp = metodosPago, logo = proveedor?.logo_url) => {
-    let score = 0;
-    if (f.company_name) score += 15;
-    if (f.description) score += 20;
-    if (f.category) score += 10;
-    if (f.province) score += 10;
-    if (f.whatsapp) score += 15;
-    if (f.instagram) score += 5;
-    if (f.min_order) score += 10;
-    if (mp.length > 0) score += 10;
-    if (f.shipping_info) score += 5;
-    if (logo) score += 10;
-    return Math.min(score, 100);
-  };
-
   const guardar = async () => {
     if (!proveedor) return;
     setGuardando(true);
-    const score = calcularScore(form, metodosPago, proveedor?.logo_url);
     await supabase.from("providers").update({
       company_name: form.company_name,
       description: form.description,
-      category: form.category,
+      category: form.category.toLowerCase(),
       province: form.province,
       city: form.city,
       whatsapp: form.whatsapp,
       instagram: form.instagram,
-      email: form.email,
       min_order: form.min_order,
       payment_methods: metodosPago.join(", "),
       shipping_info: form.shipping_info,
       profile_score: score,
     }).eq("id", proveedor.id);
-    setProveedor((prev: any) => ({ ...prev, profile_score: score }));
     setGuardando(false);
     setGuardado(true);
     setTimeout(() => setGuardado(false), 3000);
   };
 
-  if (cargando) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
-
-  const scoreActual = calcularScore(form, metodosPago, proveedor?.logo_url);
+  if (status === "loading" || !proveedor) {
+    return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+
+      <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 md:py-10">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-black text-black">Editar perfil</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              Completitud: <span className={`font-black ${scoreActual >= 80 ? "text-emerald-600" : "text-amber-500"}`}>{scoreActual}%</span>
-            </p>
+            <h1 className="text-2xl md:text-3xl font-black text-black">Editar perfil</h1>
+            <p className="text-gray-500 text-sm mt-1">{proveedor.company_name}</p>
           </div>
-          <a href="/panel" className="text-gray-500 text-sm hover:text-black">Volver al panel</a>
+          <a href="/panel" className="text-emerald-600 text-sm font-bold hover:underline">Volver al panel</a>
         </div>
 
-        <div className="bg-white border-2 border-gray-100 rounded-2xl p-8 flex flex-col gap-6">
-
-          <div>
-            <label className="text-sm font-bold text-gray-700 block mb-3">Logo de la empresa</label>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200">
-                {proveedor?.logo_url ? (
-                  <img src={proveedor.logo_url} alt="logo" className="w-full h-full object-cover"/>
-                ) : (
-                  <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-xl font-black text-emerald-700">
-                    {form.company_name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <button onClick={() => logoRef.current?.click()} disabled={subiendoLogo} className="border-2 border-gray-200 text-gray-600 font-black px-4 py-2 rounded-xl text-sm hover:border-black transition-colors">
-                {subiendoLogo ? "Subiendo..." : "Cambiar logo"}
-              </button>
-              <input ref={logoRef} type="file" accept="image/*" onChange={subirLogo} className="hidden"/>
-            </div>
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-black text-black">Perfil completo</span>
+            <span className={"text-sm font-black " + (score >= 80 ? "text-emerald-500" : score >= 50 ? "text-amber-500" : "text-red-500")}>{score}%</span>
           </div>
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className={"h-2 rounded-full transition-all " + (score >= 80 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500")} style={{width: score + "%"}}></div>
+          </div>
+          {score < 80 && (
+            <p className="text-xs text-gray-500 mt-2">Completa tu perfil al 80% para aparecer primero en los resultados</p>
+          )}
+        </div>
+
+        <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 md:p-8 flex flex-col gap-5">
 
           <div>
             <label className="text-sm font-bold text-gray-700 block mb-1">Nombre de la empresa *</label>
@@ -186,36 +150,41 @@ export default function EditarPerfil() {
 
           <div>
             <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion</label>
-            <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} rows={4} placeholder="Que vendés, cuantos anos de experiencia, quienes son tus clientes..." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
+            <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} rows={3} placeholder="Que vendés, años de experiencia, especialidad..." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-bold text-gray-700 block mb-1">Categoria principal *</label>
-              <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black">
+              <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
+              <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
                 <option value="">Seleccionar...</option>
-                {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
+                {CATEGORIAS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-bold text-gray-700 block mb-1">Provincia *</label>
-              <select value={form.province} onChange={(e) => actualizar("province", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black">
+              <label className="text-sm font-bold text-gray-700 block mb-1">Provincia</label>
+              <select value={form.province} onChange={(e) => actualizar("province", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
                 <option value="">Seleccionar...</option>
-                {PROVINCIAS.map(p => <option key={p}>{p}</option>)}
+                {PROVINCIAS_AR.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-gray-700 block mb-1">Ciudad o barrio</label>
-            <input type="text" value={form.city} onChange={(e) => actualizar("city", e.target.value)} placeholder="Ej: Once, Flores, Centro..." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
-          </div>
+          {ciudades.length > 0 && (
+            <div>
+              <label className="text-sm font-bold text-gray-700 block mb-1">Ciudad</label>
+              <select value={form.city} onChange={(e) => actualizar("city", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
+                <option value="">Seleccionar ciudad...</option>
+                {ciudades.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-bold text-gray-700 block mb-1">WhatsApp</label>
               <input type="text" value={form.whatsapp} onChange={(e) => actualizar("whatsapp", e.target.value)} placeholder="5491112345678" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
-              <p className="text-xs text-gray-400 mt-1">Sin espacios, con codigo de pais</p>
+              <p className="text-xs text-gray-400 mt-1">Con codigo de pais (54)</p>
             </div>
             <div>
               <label className="text-sm font-bold text-gray-700 block mb-1">Instagram</label>
@@ -225,14 +194,14 @@ export default function EditarPerfil() {
 
           <div>
             <label className="text-sm font-bold text-gray-700 block mb-1">Pedido minimo</label>
-            <input type="text" value={form.min_order} onChange={(e) => actualizar("min_order", e.target.value)} placeholder="Ej: $50.000 o 10 unidades" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+            <input type="text" value={form.min_order} onChange={(e) => actualizar("min_order", e.target.value)} placeholder="Ej: $50.000 o 12 unidades" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
           </div>
 
           <div>
             <label className="text-sm font-bold text-gray-700 block mb-2">Formas de pago</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {METODOS_PAGO.map((m) => (
-                <button key={m} type="button" onClick={() => togglePago(m)} className={`py-2 px-4 rounded-xl text-sm font-bold border-2 text-left transition-colors ${metodosPago.includes(m) ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black"}`}>
+                <button key={m} type="button" onClick={() => togglePago(m)} className={"py-2 px-4 rounded-xl text-sm font-bold border-2 text-left transition-colors " + (metodosPago.includes(m) ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black")}>
                   {metodosPago.includes(m) ? "✓ " : ""}{m}
                 </button>
               ))}
@@ -241,12 +210,23 @@ export default function EditarPerfil() {
 
           <div>
             <label className="text-sm font-bold text-gray-700 block mb-1">Informacion de envios</label>
-            <textarea value={form.shipping_info} onChange={(e) => actualizar("shipping_info", e.target.value)} rows={2} placeholder="Ej: Envios a todo el pais por Andreani. Retiro en local disponible." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
+            <textarea value={form.shipping_info} onChange={(e) => actualizar("shipping_info", e.target.value)} rows={2} placeholder="Ej: Envios a todo el pais por Andreani." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
           </div>
 
-          <button onClick={guardar} disabled={guardando} className={`w-full font-black py-4 rounded-xl transition-colors ${guardado ? "bg-emerald-500 text-black" : "bg-black text-white hover:bg-emerald-600"}`}>
-            {guardado ? "Guardado correctamente" : guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          {guardado && (
+            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3 text-center">
+              <p className="text-emerald-700 font-black text-sm">Cambios guardados correctamente ✅</p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <a href="/panel" className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl text-sm text-center hover:border-black transition-colors">
+              Cancelar
+            </a>
+            <button onClick={guardar} disabled={guardando} className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black py-3 rounded-xl transition-colors disabled:opacity-50 text-sm">
+              {guardando ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
