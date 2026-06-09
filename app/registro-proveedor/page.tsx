@@ -2,19 +2,12 @@
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useSession, signIn } from "next-auth/react";
+import { PROVINCIAS_AR, CIUDADES_POR_PROVINCIA } from "../../hooks/useLocalidades";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-const PROVINCIAS = [
-  "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut",
-  "Cordoba", "Corrientes", "Entre Rios", "Formosa", "Jujuy",
-  "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquen",
-  "Rio Negro", "Salta", "San Juan", "San Luis", "Santa Cruz",
-  "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucuman"
-];
 
 const CATEGORIAS = [
   "Indumentaria", "Calzado", "Electronica", "Alimentos", "Bebidas",
@@ -48,11 +41,15 @@ export default function RegistroProveedor() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [metodosPago, setMetodosPago] = useState<string[]>([]);
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState("");
+  const [ciudadSeleccionada, setCiudadSeleccionada] = useState("");
   const [form, setForm] = useState({
-    company_name: "", description: "", category: "", province: "",
-    city: "", whatsapp: "", instagram: "", email: "",
+    company_name: "", description: "", category: "",
+    whatsapp: "", instagram: "", email: "",
     min_order_price: "", min_order_qty: "", shipping_info: "",
   });
+
+  const ciudades = provinciaSeleccionada ? (CIUDADES_POR_PROVINCIA[provinciaSeleccionada] || []) : [];
 
   const actualizar = (campo: string, valor: string) => setForm((prev) => ({ ...prev, [campo]: valor }));
 
@@ -63,7 +60,7 @@ export default function RegistroProveedor() {
   };
 
   const siguiente = () => {
-    if (paso === 1 && (!form.company_name || !form.province)) {
+    if (paso === 1 && (!form.company_name || !provinciaSeleccionada)) {
       setError("Nombre y provincia son obligatorios");
       return;
     }
@@ -78,11 +75,20 @@ export default function RegistroProveedor() {
     const emailFinal = session?.user?.email || form.email;
     const minOrder = [form.min_order_price, form.min_order_qty].filter(Boolean).join(" / ");
     const { error: err } = await supabase.from("providers").insert({
-      slug, company_name: form.company_name, description: form.description,
-      category: form.category.toLowerCase(), province: form.province, city: form.city,
-      whatsapp: form.whatsapp, instagram: form.instagram, email: emailFinal,
-      min_order: minOrder, payment_methods: metodosPago.join(", "),
-      shipping_info: form.shipping_info, status: "active", profile_score: 60,
+      slug,
+      company_name: form.company_name,
+      description: form.description,
+      category: form.category.toLowerCase(),
+      province: provinciaSeleccionada,
+      city: ciudadSeleccionada,
+      whatsapp: form.whatsapp,
+      instagram: form.instagram,
+      email: emailFinal,
+      min_order: minOrder,
+      payment_methods: metodosPago.join(", "),
+      shipping_info: form.shipping_info,
+      status: "active",
+      profile_score: 60,
     });
     setCargando(false);
     if (err) { setError("Hubo un error. Intenta de nuevo."); return; }
@@ -111,11 +117,11 @@ export default function RegistroProveedor() {
         <div className="flex gap-2 mb-6 items-center">
           {[1, 2, 3].map((n) => (
             <div key={n} className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${paso >= n ? "bg-black text-white" : "bg-gray-200 text-gray-400"}`}>
+              <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs font-black " + (paso >= n ? "bg-black text-white" : "bg-gray-200 text-gray-400")}>
                 {n}
               </div>
               <span className="text-xs text-gray-400 hidden sm:block">{n === 1 ? "Empresa" : n === 2 ? "Contacto" : "Condiciones"}</span>
-              {n < 3 && <div className="w-6 h-px bg-gray-200" />}
+              {n < 3 && <div className="w-6 h-px bg-gray-200"/>}
             </div>
           ))}
         </div>
@@ -132,26 +138,40 @@ export default function RegistroProveedor() {
                 <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion</label>
                 <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Que vendés, anos de experiencia..." rows={3} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
-                  <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
-                    <option value="">Seleccionar...</option>
-                    {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Provincia *</label>
-                  <select value={form.province} onChange={(e) => actualizar("province", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
-                    <option value="">Seleccionar...</option>
-                    {PROVINCIAS.map(p => <option key={p}>{p}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
+                <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
+                  <option value="">Seleccionar...</option>
+                  {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
+                </select>
               </div>
               <div>
-                <label className="text-sm font-bold text-gray-700 block mb-1">Ciudad o barrio</label>
-                <input type="text" value={form.city} onChange={(e) => actualizar("city", e.target.value)} placeholder="Ej: Once, Flores..." className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
+                <label className="text-sm font-bold text-gray-700 block mb-1">Provincia *</label>
+                <select
+                  value={provinciaSeleccionada}
+                  onChange={(e) => {
+                    setProvinciaSeleccionada(e.target.value);
+                    setCiudadSeleccionada("");
+                  }}
+                  className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black"
+                >
+                  <option value="">Seleccionar provincia...</option>
+                  {PROVINCIAS_AR.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
               </div>
+              {provinciaSeleccionada && ciudades.length > 0 && (
+                <div>
+                  <label className="text-sm font-bold text-gray-700 block mb-1">Ciudad</label>
+                  <select
+                    value={ciudadSeleccionada}
+                    onChange={(e) => setCiudadSeleccionada(e.target.value)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black"
+                  >
+                    <option value="">Seleccionar ciudad...</option>
+                    {ciudades.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
@@ -161,7 +181,7 @@ export default function RegistroProveedor() {
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">WhatsApp</label>
                 <input type="text" value={form.whatsapp} onChange={(e) => actualizar("whatsapp", e.target.value)} placeholder="5491112345678" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
-                <p className="text-xs text-gray-400 mt-1">Sin espacios, con codigo de pais</p>
+                <p className="text-xs text-gray-400 mt-1">Sin espacios, con codigo de pais (54)</p>
               </div>
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Instagram</label>
@@ -176,9 +196,7 @@ export default function RegistroProveedor() {
               {!session && (
                 <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
                   <p className="text-sm text-emerald-800 font-bold mb-2">Conecta con Google para gestionar tu perfil</p>
-                  <button onClick={() => signIn("google")} className="bg-black text-white font-black px-4 py-2 rounded-xl text-sm">
-                    Conectar con Google
-                  </button>
+                  <button onClick={() => signIn("google")} className="bg-black text-white font-black px-4 py-2 rounded-xl text-sm">Conectar con Google</button>
                 </div>
               )}
             </div>
@@ -191,7 +209,7 @@ export default function RegistroProveedor() {
                 <label className="text-sm font-bold text-gray-700 block mb-2">Pedido minimo por precio</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {PEDIDO_MINIMO_PRECIO.map((op) => (
-                    <button key={op} type="button" onClick={() => actualizar("min_order_price", op)} className={`py-2 px-2 rounded-xl text-xs font-bold border-2 transition-colors ${form.min_order_price === op ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black"}`}>
+                    <button key={op} type="button" onClick={() => actualizar("min_order_price", op)} className={"py-2 px-2 rounded-xl text-xs font-bold border-2 transition-colors " + (form.min_order_price === op ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black")}>
                       {op}
                     </button>
                   ))}
@@ -201,7 +219,7 @@ export default function RegistroProveedor() {
                 <label className="text-sm font-bold text-gray-700 block mb-2">Pedido minimo por cantidad</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {PEDIDO_MINIMO_CANTIDAD.map((op) => (
-                    <button key={op} type="button" onClick={() => actualizar("min_order_qty", op)} className={`py-2 px-2 rounded-xl text-xs font-bold border-2 transition-colors ${form.min_order_qty === op ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black"}`}>
+                    <button key={op} type="button" onClick={() => actualizar("min_order_qty", op)} className={"py-2 px-2 rounded-xl text-xs font-bold border-2 transition-colors " + (form.min_order_qty === op ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black")}>
                       {op}
                     </button>
                   ))}
@@ -211,7 +229,7 @@ export default function RegistroProveedor() {
                 <label className="text-sm font-bold text-gray-700 block mb-2">Formas de pago</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {METODOS_PAGO.map((m) => (
-                    <button key={m} type="button" onClick={() => togglePago(m)} className={`py-2 px-4 rounded-xl text-sm font-bold border-2 text-left transition-colors ${metodosPago.includes(m) ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black"}`}>
+                    <button key={m} type="button" onClick={() => togglePago(m)} className={"py-2 px-4 rounded-xl text-sm font-bold border-2 text-left transition-colors " + (metodosPago.includes(m) ? "bg-black text-white border-black" : "border-gray-200 text-gray-600 hover:border-black")}>
                       {metodosPago.includes(m) ? "✓ " : ""}{m}
                     </button>
                   ))}
