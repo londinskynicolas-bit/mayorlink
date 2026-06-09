@@ -66,7 +66,7 @@ export default function PerfilProveedor() {
   const iniciarChat = () => {
     if (!session) { window.location.href = "/login"; return; }
     const convId = [session.user?.email, proveedor.email].sort().join("_");
-    window.location.href = `/mensajes?conv=${convId}&con=${proveedor.email}`;
+    window.location.href = "/mensajes?conv=" + convId + "&con=" + proveedor.email;
   };
 
   const promedioRating = resenas.length > 0
@@ -90,7 +90,7 @@ export default function PerfilProveedor() {
   }
 
   const nombreComprador = session?.user?.name || "un comprador";
-  const msgPerfil = encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?`);
+  const msgPerfil = "Hola " + proveedor.company_name + "! Soy " + nombreComprador + " y vi tu perfil en MayorLink. Me interesa tu catalogo mayorista, podemos hablar?";
 
   return (
     <div className="min-h-screen bg-white">
@@ -98,7 +98,7 @@ export default function PerfilProveedor() {
 
       <div className="bg-black text-white px-4 md:px-6 py-8 md:py-10">
         <div className="max-w-4xl mx-auto">
-          <a href="/busqueda" className="text-emerald-400 text-sm font-bold hover:underline block mb-4">← Volver</a>
+          <a href="/busqueda" className="text-emerald-400 text-sm font-bold hover:underline block mb-4">Volver</a>
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden flex-shrink-0">
               {proveedor.logo_url ? (
@@ -120,7 +120,7 @@ export default function PerfilProveedor() {
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 {promedioRating && (
                   <div className="flex items-center gap-1">
-                    <span className="text-yellow-400 font-black text-sm">{promedioRating} ⭐</span>
+                    <span className="text-yellow-400 font-black text-sm">{promedioRating} estrella</span>
                     <span className="text-gray-400 text-xs">({resenas.length})</span>
                   </div>
                 )}
@@ -129,30 +129,25 @@ export default function PerfilProveedor() {
               </div>
               <div className="flex gap-2 flex-wrap">
                 {proveedor.whatsapp && (
-                  
-                    href={`https://wa.me/${proveedor.whatsapp}?text=${msgPerfil}`}
-                    target="_blank"
-                    onClick={registrarClickWhatsApp}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm"
-                  >
+                  <a href={"https://wa.me/" + proveedor.whatsapp + "?text=" + encodeURIComponent(msgPerfil)} target="_blank" onClick={registrarClickWhatsApp} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm">
                     WhatsApp
                   </a>
                 )}
                 <button onClick={iniciarChat} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
-                  💬 Mensaje
+                  Mensaje
                 </button>
                 {session && (
-                  <button onClick={toggleFavorito} disabled={toggleandoFav} className={`border-2 font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm ${esFavorito ? "bg-yellow-400 border-yellow-400 text-black" : "border-gray-600 text-white hover:border-yellow-400"}`}>
-                    {toggleandoFav ? "..." : esFavorito ? "❤️" : "🤍"}
+                  <button onClick={toggleFavorito} disabled={toggleandoFav} className={"border-2 font-black px-4 py-2 rounded-xl transition-colors text-xs md:text-sm " + (esFavorito ? "bg-yellow-400 border-yellow-400 text-black" : "border-gray-600 text-white hover:border-yellow-400")}>
+                    {toggleandoFav ? "..." : esFavorito ? "Guardado" : "Guardar"}
                   </button>
                 )}
                 {proveedor.instagram && (
-                  <a href={`https://instagram.com/${proveedor.instagram}`} target="_blank" className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-white transition-colors text-xs md:text-sm">
-                    IG
+                  <a href={"https://instagram.com/" + proveedor.instagram} target="_blank" className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-white transition-colors text-xs md:text-sm">
+                    Instagram
                   </a>
                 )}
-                <a href={`/resena?proveedor=${proveedor.slug}`} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
-                  Reseña
+                <a href={"/resena?proveedor=" + proveedor.slug} className="border-2 border-gray-600 text-white font-black px-4 py-2 rounded-xl hover:border-emerald-400 hover:text-emerald-400 transition-colors text-xs md:text-sm">
+                  Resena
                 </a>
               </div>
             </div>
@@ -197,7 +192,7 @@ export default function PerfilProveedor() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {productos.map((p) => {
-                const msgProducto = encodeURIComponent(`Hola ${proveedor.company_name}! Soy ${nombreComprador} y vi tu perfil en MayorLink. Me interesa el producto: ${p.name}. Podemos hablar?`);
+                const msgProducto = "Hola " + proveedor.company_name + "! Soy " + nombreComprador + " y vi tu perfil en MayorLink. Me interesa el producto: " + p.name + ". Podemos hablar?";
                 return (
                   <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
                     {p.images && p.images.length > 0 ? (
@@ -207,7 +202,7 @@ export default function PerfilProveedor() {
                           <>
                             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
                               {p.images.map((_: string, i: number) => (
-                                <button key={i} onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))} className={`w-2 h-2 rounded-full ${(fotoActiva[p.id] || 0) === i ? "bg-white" : "bg-white opacity-50"}`}/>
+                                <button key={i} onClick={() => setFotoActiva(prev => ({ ...prev, [p.id]: i }))} className={"w-2 h-2 rounded-full " + ((fotoActiva[p.id] || 0) === i ? "bg-white" : "bg-white opacity-50")}/>
                               ))}
                             </div>
                             <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
@@ -237,12 +232,7 @@ export default function PerfilProveedor() {
                       </div>
                       <div className="mt-auto">
                         {proveedor.whatsapp && (
-                          
-                            href={`https://wa.me/${proveedor.whatsapp}?text=${msgProducto}`}
-                            target="_blank"
-                            onClick={registrarClickWhatsApp}
-                            className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors"
-                          >
+                          <a href={"https://wa.me/" + proveedor.whatsapp + "?text=" + encodeURIComponent(msgProducto)} target="_blank" onClick={registrarClickWhatsApp} className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
                             Consultar por WhatsApp
                           </a>
                         )}
@@ -255,31 +245,18 @@ export default function PerfilProveedor() {
           </div>
         )}
 
-        {productos.length === 0 && (
-          <div className="mb-8">
-            <h2 className="text-base font-black text-black uppercase tracking-tight mb-4">Galeria</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                  <span className="text-xs text-gray-400 font-bold">FOTO {n}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-black text-black uppercase tracking-tight">
-              Resenas {promedioRating && <span className="text-yellow-500">{promedioRating} ⭐</span>}
+              Resenas {promedioRating && <span className="text-yellow-500">{promedioRating}</span>}
               <span className="ml-2 text-sm font-normal text-gray-400 normal-case">({resenas.length})</span>
             </h2>
-            <a href={`/resena?proveedor=${proveedor.slug}`} className="text-emerald-600 text-xs font-bold hover:underline">Dejar resena</a>
+            <a href={"/resena?proveedor=" + proveedor.slug} className="text-emerald-600 text-xs font-bold hover:underline">Dejar resena</a>
           </div>
           {resenas.length === 0 ? (
             <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center">
               <p className="text-gray-400 text-sm font-bold mb-3">Todavia no hay resenas</p>
-              <a href={`/resena?proveedor=${proveedor.slug}`} className="inline-block bg-emerald-500 text-black font-black px-5 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
+              <a href={"/resena?proveedor=" + proveedor.slug} className="inline-block bg-emerald-500 text-black font-black px-5 py-2 rounded-xl text-sm hover:bg-emerald-400 transition-colors">
                 Dejar resena
               </a>
             </div>
@@ -292,7 +269,7 @@ export default function PerfilProveedor() {
                       <div className="font-black text-black text-sm">{r.reviewer_name}</div>
                       <div className="flex items-center gap-1 mt-1">
                         {[1,2,3,4,5].map((n) => (
-                          <span key={n} className={n <= r.rating ? "text-yellow-400 text-sm" : "text-gray-200 text-sm"}>⭐</span>
+                          <span key={n} className={n <= r.rating ? "text-yellow-400 text-sm" : "text-gray-200 text-sm"}>*</span>
                         ))}
                         {r.is_verified && <span className="ml-1 text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Verificada</span>}
                       </div>
