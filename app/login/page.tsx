@@ -7,13 +7,19 @@ export default function Login() {
 
   useEffect(() => {
     if (session) {
-      window.location.href = "/panel";
+      const destino = sessionStorage.getItem("redirect_after_login");
+      if (destino) {
+        sessionStorage.removeItem("redirect_after_login");
+        window.location.href = destino;
+      } else {
+        window.location.href = "/panel";
+      }
     }
   }, [session]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-10 max-w-md w-full mx-4 text-center">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl p-8 md:p-10 max-w-md w-full text-center">
         <div className="text-xs text-emerald-600 font-black uppercase tracking-widest mb-2">Mayorista B2B</div>
         <h1 className="text-3xl font-black text-black mb-2">MayorLink</h1>
         <p className="text-gray-500 text-sm mb-8">Ingresa para gestionar el perfil de tu empresa</p>
@@ -30,7 +36,7 @@ export default function Login() {
           Continuar con Google
         </button>
         <p className="text-xs text-gray-400 mt-6">
-          Al ingresar aceptas los terminos de uso de MayorLink
+          Al ingresar aceptas los <a href="/terminos" className="underline hover:text-gray-600">terminos de uso</a> de MayorLink
         </p>
       </div>
     </div>

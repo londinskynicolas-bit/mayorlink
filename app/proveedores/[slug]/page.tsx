@@ -43,6 +43,17 @@ export default function PerfilProveedor() {
     }
   }, [session, proveedor]);
 
+  // Si volvimos del login con intencion de abrir el chat, lo abrimos automaticamente
+  useEffect(() => {
+    if (session?.user?.email && proveedor?.email) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("abrir_chat") === "1") {
+        const convId = [session.user.email, proveedor.email].sort().join("_");
+        window.location.href = "/mensajes?conv=" + convId + "&con=" + proveedor.email;
+      }
+    }
+  }, [session, proveedor]);
+
   const toggleFavorito = async () => {
     if (!session?.user?.email || !proveedor) return;
     setToggleandoFav(true);
@@ -64,7 +75,11 @@ export default function PerfilProveedor() {
   };
 
   const iniciarChat = () => {
-    if (!session) { window.location.href = "/login"; return; }
+    if (!session) {
+      sessionStorage.setItem("redirect_after_login", "/proveedores/" + proveedor.slug + "?abrir_chat=1");
+      window.location.href = "/login";
+      return;
+    }
     const convId = [session.user?.email, proveedor.email].sort().join("_");
     window.location.href = "/mensajes?conv=" + convId + "&con=" + proveedor.email;
   };
@@ -120,7 +135,7 @@ export default function PerfilProveedor() {
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 {promedioRating && (
                   <div className="flex items-center gap-1">
-                    <span className="text-yellow-400 font-black text-sm">{promedioRating} estrella</span>
+                    <span className="text-yellow-400 font-black text-sm">{promedioRating} estrellas</span>
                     <span className="text-gray-400 text-xs">({resenas.length})</span>
                   </div>
                 )}
