@@ -14,7 +14,10 @@ export default function MisProductos() {
   const [productos, setProductos] = useState<any[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [yaPublicado, setYaPublicado] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [errorFoto, setErrorFoto] = useState("");
+  const [error, setError] = useState("");
   const [fotosProducto, setFotosProducto] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
@@ -42,40 +45,74 @@ export default function MisProductos() {
   const subirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setErrorFoto("");
+
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 8) {
+      setErrorFoto(`La imagen pesa ${sizeMB.toFixed(1)}MB. El maximo es 8MB. Proba con otra foto o reducila desde tu celular.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setSubiendoFoto(true);
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    const data = await res.json();
-    if (data.url) setFotosProducto((prev) => [...prev, data.url]);
+
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setErrorFoto(data.error || "No pudimos subir la imagen. Intenta de nuevo.");
+        setSubiendoFoto(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      setFotosProducto((prev) => [...prev, data.url]);
+    } catch {
+      setErrorFoto("Hubo un problema de conexion. Verifica tu internet e intenta de nuevo.");
+    }
     setSubiendoFoto(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const guardarProducto = async () => {
-    if (!form.name || !proveedor) return;
+    if (yaPublicado || cargando) return;
+    setError("");
+    if (!form.name.trim()) { setError("El nombre del producto es obligatorio"); return; }
+    if (!proveedor) return;
+
     setCargando(true);
-    const { data, error } = await supabase.from("products").insert({
+    const { data, error: err } = await supabase.from("products").insert({
       provider_id: proveedor.id,
       provider_slug: proveedor.slug,
-      name: form.name,
-      description: form.description,
-      price_unit: form.price_unit,
-      price_dozen: form.price_dozen,
-      price_box: form.price_box,
+      name: form.name.trim(),
+      description: form.description.trim(),
+      price_unit: form.price_unit.trim(),
+      price_dozen: form.price_dozen.trim(),
+      price_box: form.price_box.trim(),
       category: form.category,
-      material: form.material,
-      measures: form.measures,
-      stock: form.stock,
+      material: form.material.trim(),
+      measures: form.measures.trim(),
+      stock: form.stock.trim(),
       images: fotosProducto,
       status: "active",
     }).select().single();
-    setCargando(false);
-    if (!error && data) {
-      setProductos((prev) => [data, ...prev]);
-      setForm({ name: "", description: "", price_unit: "", price_dozen: "", price_box: "", category: "", material: "", measures: "", stock: "" });
-      setFotosProducto([]);
-      setMostrarForm(false);
+
+    if (err) {
+      setCargando(false);
+      setError("No pudimos guardar el producto. Intenta de nuevo en un momento.");
+      return;
     }
+
+    setProductos((prev) => [data, ...prev]);
+    setForm({ name: "", description: "", price_unit: "", price_dozen: "", price_box: "", category: "", material: "", measures: "", stock: "" });
+    setFotosProducto([]);
+    setCargando(false);
+    setYaPublicado(true);
+    setMostrarForm(false);
+    setTimeout(() => setYaPublicado(false), 1500);
   };
 
   if (status === "loading") return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-gray-400 font-bold">Cargando...</div></div>;
@@ -109,7 +146,7 @@ export default function MisProductos() {
             <h1 className="text-2xl md:text-3xl font-black text-black">Mis productos</h1>
             <p className="text-gray-500 text-xs mt-1">{proveedor?.company_name} · {productos.length} publicados</p>
           </div>
-          <button onClick={() => setMostrarForm(!mostrarForm)} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-sm">
+          <button onClick={() => { setMostrarForm(!mostrarForm); setError(""); }} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 py-2 rounded-xl transition-colors text-sm">
             + Agregar
           </button>
         </div>
@@ -127,7 +164,7 @@ export default function MisProductos() {
                 <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Descripcion detallada..." rows={2} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
               </div>
               <div>
-                <label className="text-sm font-bold text-gray-700 block mb-2">Fotos (hasta 6)</label>
+                <label className="text-sm font-bold text-gray-700 block mb-2">Fotos (hasta 6, maximo 8MB cada una)</label>
                 <div className="flex gap-2 flex-wrap">
                   {fotosProducto.map((url, i) => (
                     <div key={i} className="relative w-20 h-20">
@@ -136,12 +173,19 @@ export default function MisProductos() {
                     </div>
                   ))}
                   {fotosProducto.length < 6 && (
-                    <button onClick={() => fileInputRef.current?.click()} disabled={subiendoFoto} className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black transition-colors text-xs">
-                      {subiendoFoto ? "..." : <><span className="text-xl">+</span><span>Foto</span></>}
+                    <button onClick={() => fileInputRef.current?.click()} disabled={subiendoFoto} className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black transition-colors text-xs disabled:opacity-50">
+                      {subiendoFoto ? (
+                        <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <><span className="text-xl">+</span><span>Foto</span></>
+                      )}
                     </button>
                   )}
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={subirFoto} className="hidden"/>
+                {errorFoto && (
+                  <div className="mt-2 bg-red-50 border-2 border-red-200 rounded-xl px-3 py-2 text-xs text-red-700 font-medium">{errorFoto}</div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={subirFoto} className="hidden"/>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -183,12 +227,22 @@ export default function MisProductos() {
                   <input type="text" value={form.measures} onChange={(e) => actualizar("measures", e.target.value)} placeholder="S, M, L, XL" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
+
+              {error && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">{error}</div>
+              )}
+
               <div className="flex gap-3">
-                <button onClick={() => { setMostrarForm(false); setFotosProducto([]); }} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl text-sm">
+                <button onClick={() => { setMostrarForm(false); setFotosProducto([]); setError(""); }} disabled={cargando} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl text-sm disabled:opacity-50">
                   Cancelar
                 </button>
-                <button onClick={guardarProducto} disabled={cargando || !form.name} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 text-sm">
-                  {cargando ? "Guardando..." : "Publicar"}
+                <button onClick={guardarProducto} disabled={cargando || subiendoFoto} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-60 text-sm flex items-center justify-center gap-2">
+                  {cargando ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                      Guardando...
+                    </>
+                  ) : "Publicar"}
                 </button>
               </div>
             </div>
@@ -209,9 +263,9 @@ export default function MisProductos() {
             {productos.map((p) => (
               <div key={p.id} className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all">
                 {p.images && p.images.length > 0 ? (
-                  <img src={p.images[0]} alt={p.name} className="w-full aspect-video object-cover"/>
+                  <img src={p.images[0]} alt={p.name} className="w-full aspect-square object-cover"/>
                 ) : (
-                  <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
                     <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
                   </div>
                 )}
