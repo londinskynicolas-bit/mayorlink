@@ -18,12 +18,17 @@ const PROVINCIAS = [
   "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucuman"
 ];
 
+const POR_PAGINA = 20;
+
 export default function Busqueda() {
   const [proveedores, setProveedores] = useState<any[]>([]);
+  const [totalResultados, setTotalResultados] = useState(0);
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [provincia, setProvincia] = useState("Todas");
   const [cargando, setCargando] = useState(true);
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [pagina, setPagina] = useState(0);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   useEffect(() => {
@@ -37,8 +42,12 @@ export default function Busqueda() {
   }, []);
 
   useEffect(() => {
-    setCargando(true);
-    let query = supabase.from("providers").select("*").eq("status", "active");
+    setPagina(0);
+    buscarProveedores(0, false);
+  }, [busqueda, categoria, provincia]);
+
+  const construirQuery = () => {
+    let query = supabase.from("providers").select("*", { count: "exact" }).eq("status", "active");
     if (busqueda) {
       query = query.or(`company_name.ilike.%${busqueda}%,description.ilike.%${busqueda}%,city.ilike.%${busqueda}%,category.ilike.%${busqueda}%`);
     }
@@ -48,11 +57,34 @@ export default function Busqueda() {
     if (provincia !== "Todas") {
       query = query.eq("province", provincia);
     }
-    query.order("is_founder", { ascending: false }).then(({ data }) => {
+    return query;
+  };
+
+  const buscarProveedores = async (pag: number, agregar: boolean) => {
+    if (agregar) setCargandoMas(true); else setCargando(true);
+
+    const desde = pag * POR_PAGINA;
+    const hasta = desde + POR_PAGINA - 1;
+
+    const { data, count } = await construirQuery()
+      .order("is_founder", { ascending: false })
+      .range(desde, hasta);
+
+    setTotalResultados(count || 0);
+    if (agregar) {
+      setProveedores((prev) => [...prev, ...(data || [])]);
+    } else {
       setProveedores(data || []);
-      setCargando(false);
-    });
-  }, [busqueda, categoria, provincia]);
+    }
+    setCargando(false);
+    setCargandoMas(false);
+  };
+
+  const verMas = () => {
+    const siguiente = pagina + 1;
+    setPagina(siguiente);
+    buscarProveedores(siguiente, true);
+  };
 
   const buscar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +92,8 @@ export default function Busqueda() {
     if (busqueda) params.set("q", busqueda);
     window.history.pushState({}, "", "/busqueda?" + params.toString());
   };
+
+  const hayMas = proveedores.length < totalResultados;
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,7 +123,6 @@ export default function Busqueda() {
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 flex gap-6">
 
-        {/* Sidebar desktop / panel mobile */}
         <aside className={`${filtrosAbiertos ? "block" : "hidden"} md:block w-full md:w-56 flex-shrink-0`}>
           <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 mb-4 md:mb-0 md:bg-transparent md:border-0 md:p-0">
             <div className="mb-4">
@@ -115,7 +148,7 @@ export default function Busqueda() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-lg md:text-xl font-black text-black uppercase tracking-tight">
               Resultados
-              <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{proveedores.length} proveedores</span>
+              <span className="ml-2 text-sm font-normal text-gray-400 normal-case">{totalResultados} proveedores</span>
             </h1>
           </div>
 
@@ -130,53 +163,68 @@ export default function Busqueda() {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {proveedores.map((p) => (
-                <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-black transition-all">
-                  <div className="flex gap-3">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                      {p.logo_url ? (
-                        <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
-                      ) : (
-                        <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-lg font-black text-emerald-700">
-                          {p.company_name.slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1 gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1 mb-1 flex-wrap">
-                            {p.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full">Verificado</span>}
-                            {p.is_founder && <span className="text-xs bg-black text-white font-black px-2 py-0.5 rounded-full">Fundador</span>}
-                            {p.category && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full capitalize">{p.category}</span>}
-                          </div>
-                          <div className="text-base font-black text-black truncate">{p.company_name}</div>
-                          <div className="text-xs text-gray-500">{p.city ? p.city + ", " : ""}{p.province}</div>
-                        </div>
-                        {p.min_order && (
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-xs text-gray-400">Min</div>
-                            <div className="text-sm font-black text-emerald-600">{p.min_order}</div>
+            <>
+              <div className="flex flex-col gap-4">
+                {proveedores.map((p) => (
+                  <div key={p.id} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-black transition-all">
+                    <div className="flex gap-3">
+                      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                        {p.logo_url ? (
+                          <img src={p.logo_url} alt="logo" className="w-full h-full object-cover"/>
+                        ) : (
+                          <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-lg font-black text-emerald-700">
+                            {p.company_name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
                       </div>
-                      {p.description && <p className="text-xs text-gray-600 mb-2 line-clamp-2">{p.description}</p>}
-                      <div className="flex gap-2">
-                        <a href={"/proveedores/" + p.slug} className="flex-1 border-2 border-black text-black font-black text-xs py-2 rounded-xl text-center hover:bg-black hover:text-white transition-colors">
-                          Ver perfil
-                        </a>
-                        {p.whatsapp && (
-                          <a href={"https://wa.me/" + p.whatsapp} target="_blank" className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
-                            WhatsApp
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1 gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1 mb-1 flex-wrap">
+                              {p.is_verified && <span className="text-xs bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded-full">Verificado</span>}
+                              {p.is_founder && <span className="text-xs bg-black text-white font-black px-2 py-0.5 rounded-full">Fundador</span>}
+                              {p.category && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full capitalize">{p.category}</span>}
+                            </div>
+                            <div className="text-base font-black text-black truncate">{p.company_name}</div>
+                            <div className="text-xs text-gray-500">{p.city ? p.city + ", " : ""}{p.province}</div>
+                          </div>
+                          {p.min_order && (
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-xs text-gray-400">Min</div>
+                              <div className="text-sm font-black text-emerald-600">{p.min_order}</div>
+                            </div>
+                          )}
+                        </div>
+                        {p.description && <p className="text-xs text-gray-600 mb-2 line-clamp-2">{p.description}</p>}
+                        <div className="flex gap-2">
+                          <a href={"/proveedores/" + p.slug} className="flex-1 border-2 border-black text-black font-black text-xs py-2 rounded-xl text-center hover:bg-black hover:text-white transition-colors">
+                            Ver perfil
                           </a>
-                        )}
+                          {p.whatsapp && (
+                            <a href={"https://wa.me/" + p.whatsapp} target="_blank" className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {hayMas && (
+                <div className="text-center mt-6">
+                  <button onClick={verMas} disabled={cargandoMas} className="bg-white border-2 border-black text-black font-black px-8 py-3 rounded-xl hover:bg-black hover:text-white transition-colors text-sm disabled:opacity-50 inline-flex items-center gap-2">
+                    {cargandoMas ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                        Cargando...
+                      </>
+                    ) : `Ver mas (${totalResultados - proveedores.length} restantes)`}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </main>
       </div>
