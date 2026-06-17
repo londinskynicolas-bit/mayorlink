@@ -24,15 +24,15 @@ export default function PerfilProveedor() {
     if (!slug) return;
     supabase.from("providers").select("*").eq("slug", slug).single()
       .then(({ data }) => {
-        setProveedor(data);
         setCargando(false);
-        if (data) {
-          supabase.from("providers").update({ views_count: (data.views_count || 0) + 1 }).eq("slug", slug).then(() => {});
-          supabase.from("products").select("*").eq("provider_slug", slug).eq("status", "active")
-            .then(({ data: prods }) => setProductos(prods || []));
-          supabase.from("reviews").select("*").eq("provider_slug", slug).order("created_at", { ascending: false })
-            .then(({ data: revs }) => setResenas(revs || []));
-        }
+        if (!data) { setProveedor(null); return; }
+        if (data.status !== "active") { setProveedor(null); return; }
+        setProveedor(data);
+        supabase.from("providers").update({ views_count: (data.views_count || 0) + 1 }).eq("slug", slug).then(() => {});
+        supabase.from("products").select("*").eq("provider_slug", slug).eq("status", "active")
+          .then(({ data: prods }) => setProductos(prods || []));
+        supabase.from("reviews").select("*").eq("provider_slug", slug).order("created_at", { ascending: false })
+          .then(({ data: revs }) => setResenas(revs || []));
       });
   }, []);
 
@@ -43,7 +43,6 @@ export default function PerfilProveedor() {
     }
   }, [session, proveedor]);
 
-  // Si volvimos del login con intencion de abrir el chat, lo abrimos automaticamente
   useEffect(() => {
     if (session?.user?.email && proveedor?.email) {
       const params = new URLSearchParams(window.location.search);
@@ -94,10 +93,12 @@ export default function PerfilProveedor() {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-20 px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-black text-black mb-4">Proveedor no encontrado</h1>
-            <a href="/busqueda" className="bg-emerald-500 text-black font-black px-6 py-3 rounded-xl">Ir a busqueda</a>
+            <div className="text-4xl mb-4">🔍</div>
+            <h1 className="text-2xl font-black text-black mb-2">Este perfil no esta disponible</h1>
+            <p className="text-gray-500 text-sm mb-6">El proveedor que buscas no existe o ya no esta activo en la plataforma.</p>
+            <a href="/busqueda" className="bg-emerald-500 text-black font-black px-6 py-3 rounded-xl inline-block">Ver otros proveedores</a>
           </div>
         </div>
       </div>
