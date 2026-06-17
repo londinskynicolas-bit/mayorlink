@@ -1,7 +1,8 @@
 "use client";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import Notificaciones from "./Notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,13 +26,12 @@ export default function Navbar() {
 
   return (
     <nav className="bg-black sticky top-0 z-50">
-      <div className="px-6 py-4 flex items-center justify-between">
+      <div className="px-4 md:px-6 py-4 flex items-center justify-between">
         <a href="/" className="block">
           <div className="text-xs text-emerald-400 font-bold tracking-widest uppercase">Mayorista B2B</div>
-          <div className="text-2xl font-black text-white tracking-tight">MayorLink</div>
+          <div className="text-xl md:text-2xl font-black text-white tracking-tight">MayorLink</div>
         </a>
 
-        {/* Desktop */}
         <div className="hidden md:flex items-center gap-4">
           <a href="/busqueda" className="text-gray-300 text-sm font-medium hover:text-white">Proveedores</a>
           <a href="/solicitudes" className="text-gray-300 text-sm font-medium hover:text-white">Solicitudes</a>
@@ -45,6 +45,7 @@ export default function Navbar() {
               )}
             </a>
           )}
+          {session && <Notificaciones />}
           {session ? (
             <div className="flex items-center gap-3">
               <a href={esProveedor ? "/panel" : "/panel-comprador"} className="text-gray-300 text-sm font-medium hover:text-white">Mi panel</a>
@@ -63,50 +64,51 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile - hamburguesa */}
-        <button onClick={() => setMenuAbierto(!menuAbierto)} className="md:hidden text-white p-2">
-          {menuAbierto ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 12h18M3 6h18M3 18h18"/>
-            </svg>
-          )}
-        </button>
+        <div className="flex md:hidden items-center gap-2">
+          {session && <Notificaciones />}
+          <button onClick={() => setMenuAbierto(!menuAbierto)} className="text-white p-2">
+            {menuAbierto ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Menu mobile */}
       {menuAbierto && (
-        <div className="md:hidden bg-black border-t border-gray-800 px-6 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-black border-t border-gray-800 px-4 py-4 flex flex-col gap-4">
           <a href="/busqueda" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-            🔍 Buscar proveedores
+            Buscar proveedores
           </a>
           <a href="/solicitudes" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-            📋 Solicitudes de compra
+            Solicitudes de compra
           </a>
           {session ? (
             <>
               <a href="/mensajes" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800 flex items-center justify-between">
-                <span>💬 Mensajes</span>
+                <span>Mensajes</span>
                 {mensajesNoLeidos > 0 && <span className="bg-emerald-500 text-black text-xs font-black px-2 py-0.5 rounded-full">{mensajesNoLeidos}</span>}
               </a>
               <a href={esProveedor ? "/panel" : "/panel-comprador"} onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-                📊 Mi panel
+                Mi panel
               </a>
               {esProveedor && (
                 <>
                   <a href="/mis-productos" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-                    📦 Mis productos
+                    Mis productos
                   </a>
                   <a href="/editar-perfil" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-                    ✏️ Editar perfil
+                    Editar perfil
                   </a>
                 </>
               )}
               <a href="/panel-comprador" onClick={() => setMenuAbierto(false)} className="text-gray-300 text-sm font-medium hover:text-white py-2 border-b border-gray-800">
-                🛒 Panel de comprador
+                Panel de comprador
               </a>
               <button onClick={() => { signOut(); setMenuAbierto(false); }} className="text-red-400 text-sm font-medium hover:text-red-300 py-2 text-left">
                 Cerrar sesion
