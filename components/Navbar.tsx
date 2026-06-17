@@ -2,7 +2,6 @@
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import Notificaciones from "./Notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,7 +44,6 @@ export default function Navbar() {
               )}
             </a>
           )}
-          {session && <Notificaciones />}
           {session ? (
             <div className="flex items-center gap-3">
               <a href={esProveedor ? "/panel" : "/panel-comprador"} className="text-gray-300 text-sm font-medium hover:text-white">Mi panel</a>
@@ -65,7 +63,6 @@ export default function Navbar() {
         </div>
 
         <div className="flex md:hidden items-center gap-2">
-          {session && <Notificaciones />}
           <button onClick={() => setMenuAbierto(!menuAbierto)} className="text-white p-2">
             {menuAbierto ? (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
