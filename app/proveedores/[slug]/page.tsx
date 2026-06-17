@@ -9,6 +9,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+function formatearLabelSpec(key: string) {
+  const labels: { [key: string]: string } = {
+    talles: "Talles", material: "Material", color: "Color", genero: "Genero",
+    temporada: "Temporada", tipo_suela: "Suela", medidas: "Medidas",
+    armado: "Armado", garantia: "Garantia", marca: "Marca", modelo: "Modelo",
+    voltaje: "Voltaje", peso_volumen: "Peso/Volumen", vencimiento_minimo: "Vencimiento minimo",
+    conservacion: "Conservacion", apto_especial: "Especial", volumen: "Volumen",
+    tipo_piel: "Tipo de piel", fragancia: "Fragancia", vencimiento: "Vencimiento",
+    deporte: "Deporte", edad_recomendada: "Edad", pilas: "Pilas",
+    marca_compatible: "Compatible con", presentacion: "Presentacion", uso: "Uso",
+  };
+  return labels[key] || key;
+}
+
 export default function PerfilProveedor() {
   const { data: session } = useSession();
   const [proveedor, setProveedor] = useState<any>(null);
@@ -209,11 +223,12 @@ export default function PerfilProveedor() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {productos.map((p) => {
                 const msgProducto = "Hola " + proveedor.company_name + "! Soy " + nombreComprador + " y vi tu perfil en MayorLink. Me interesa el producto: " + p.name + ". Podemos hablar?";
+                const specsValidas = p.specs && typeof p.specs === "object" ? Object.entries(p.specs).filter(([_, v]) => v) : [];
                 return (
                   <div key={p.id} className="border-2 border-gray-100 rounded-2xl overflow-hidden hover:border-black transition-all flex flex-col">
                     {p.images && p.images.length > 0 ? (
                       <div className="relative">
-                        <img src={p.images[fotoActiva[p.id] || 0]} alt={p.name} className="w-full aspect-video object-cover"/>
+                        <img src={p.images[fotoActiva[p.id] || 0]} alt={p.name} className="w-full aspect-square object-cover"/>
                         {p.images.length > 1 && (
                           <>
                             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
@@ -229,7 +244,7 @@ export default function PerfilProveedor() {
                         )}
                       </div>
                     ) : (
-                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                      <div className="aspect-square bg-gray-100 flex items-center justify-center">
                         <span className="text-xs text-gray-400 font-bold">Sin fotos</span>
                       </div>
                     )}
@@ -241,11 +256,17 @@ export default function PerfilProveedor() {
                         {p.price_dozen && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">Docena: {p.price_dozen}</span>}
                         {p.price_box && <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">Caja: {p.price_box}</span>}
                       </div>
-                      <div className="flex gap-2 text-xs text-gray-400 flex-wrap mb-3">
-                        {p.material && <span>Mat: {p.material}</span>}
-                        {p.measures && <span>· {p.measures}</span>}
-                        {p.stock && <span>· Stock: {p.stock}</span>}
-                      </div>
+                      {specsValidas.length > 0 && (
+                        <div className="mb-3 border-t border-gray-100 pt-2">
+                          {specsValidas.map(([key, value]) => (
+                            <div key={key} className="text-xs text-gray-500 flex justify-between py-0.5">
+                              <span className="font-bold text-gray-600">{formatearLabelSpec(key)}</span>
+                              <span>{String(value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {p.stock && <div className="text-xs text-gray-400 mb-3">Stock: {p.stock}</div>}
                       <div className="mt-auto">
                         {proveedor.whatsapp && (
                           <a href={"https://wa.me/" + proveedor.whatsapp + "?text=" + encodeURIComponent(msgProducto)} target="_blank" onClick={registrarClickWhatsApp} className="block w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2 rounded-xl text-center transition-colors">
