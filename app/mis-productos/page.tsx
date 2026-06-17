@@ -2,11 +2,19 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useSession } from "next-auth/react";
+import { obtenerCamposPorCategoria, NO_APLICA } from "../../hooks/useEspecificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+const CATEGORIAS = [
+  "Indumentaria", "Calzado", "Electronica", "Alimentos", "Bebidas",
+  "Ferreteria", "Cosmetica", "Hogar", "Deportes", "Juguetes",
+  "Tecnologia", "Textil", "Packaging", "Automotriz", "Agro",
+  "Salud", "Libreria", "Otros"
+];
 
 export default function MisProductos() {
   const { data: session, status } = useSession();
@@ -22,8 +30,9 @@ export default function MisProductos() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     name: "", description: "", price_unit: "", price_dozen: "",
-    price_box: "", category: "", material: "", measures: "", stock: "",
+    price_box: "", category: "", stock: "",
   });
+  const [specs, setSpecs] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (status === "unauthenticated") window.location.href = "/login";
@@ -40,7 +49,20 @@ export default function MisProductos() {
     }
   }, [status, session]);
 
-  const actualizar = (campo: string, valor: string) => setForm((prev) => ({ ...prev, [campo]: valor }));
+  const camposActuales = form.category ? obtenerCamposPorCategoria(form.category) : [];
+
+  const actualizar = (campo: string, valor: string) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (campo === "category") {
+      setSpecs({});
+    }
+  };
+
+  const actualizarSpec = (key: string, valor: string) => {
+    setSpecs((prev) => ({ ...prev, [key]: valor }));
+  };
+
+  const todasLasSpecsCompletas = camposActuales.every((c) => specs[c.key] && specs[c.key].trim() !== "");
 
   const subirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,7 +103,14 @@ export default function MisProductos() {
     if (yaPublicado || cargando) return;
     setError("");
     if (!form.name.trim()) { setError("El nombre del producto es obligatorio"); return; }
+    if (!form.category) { setError("Selecciona una categoria"); return; }
+    if (!todasLasSpecsCompletas) { setError("Completa todas las especificaciones. Si alguna no corresponde a tu producto, selecciona 'No aplica'."); return; }
     if (!proveedor) return;
+
+    const specsFiltradas: { [key: string]: string } = {};
+    Object.entries(specs).forEach(([key, value]) => {
+      if (value && value !== NO_APLICA) specsFiltradas[key] = value;
+    });
 
     setCargando(true);
     const { data, error: err } = await supabase.from("products").insert({
@@ -93,10 +122,9 @@ export default function MisProductos() {
       price_dozen: form.price_dozen.trim(),
       price_box: form.price_box.trim(),
       category: form.category,
-      material: form.material.trim(),
-      measures: form.measures.trim(),
       stock: form.stock.trim(),
       images: fotosProducto,
+      specs: specsFiltradas,
       status: "active",
     }).select().single();
 
@@ -107,7 +135,8 @@ export default function MisProductos() {
     }
 
     setProductos((prev) => [data, ...prev]);
-    setForm({ name: "", description: "", price_unit: "", price_dozen: "", price_box: "", category: "", material: "", measures: "", stock: "" });
+    setForm({ name: "", description: "", price_unit: "", price_dozen: "", price_box: "", category: "", stock: "" });
+    setSpecs({});
     setFotosProducto([]);
     setCargando(false);
     setYaPublicado(true);
@@ -160,9 +189,58 @@ export default function MisProductos() {
                 <input type="text" value={form.name} onChange={(e) => actualizar("name", e.target.value)} placeholder="Ej: Remera basica manga corta" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
               </div>
               <div>
+                <label className="text-sm font-bold text-gray-700 block mb-1">Categoria *</label>
+                <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black">
+                  <option value="">Seleccionar...</option>
+                  {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Descripcion</label>
                 <textarea value={form.description} onChange={(e) => actualizar("description", e.target.value)} placeholder="Descripcion detallada..." rows={2} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black resize-none"/>
               </div>
+
+              {form.category && camposActuales.length > 0 && (
+                <div className="bg-gray-50 border-2 border-gray-100 rounded-xl p-4">
+                  <div className="text-sm font-black text-black mb-3">
+                    Especificaciones de {form.category}
+                    <span className="ml-2 text-xs font-normal text-gray-400">Si alguna no aplica a tu producto, selecciona "No aplica"</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {camposActuales.map((campo) => (
+                      <div key={campo.key}>
+                        <label className="text-xs font-bold text-gray-700 block mb-1">{campo.label} *</label>
+                        {campo.tipo === "select" ? (
+                          <select value={specs[campo.key] || ""} onChange={(e) => actualizarSpec(campo.key, e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black bg-white">
+                            <option value="">Seleccionar...</option>
+                            {campo.opciones?.map((op) => <option key={op} value={op}>{op}</option>)}
+                            <option value={NO_APLICA}>{NO_APLICA}</option>
+                          </select>
+                        ) : (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={specs[campo.key] === NO_APLICA ? "" : (specs[campo.key] || "")}
+                              onChange={(e) => actualizarSpec(campo.key, e.target.value)}
+                              placeholder={campo.placeholder}
+                              disabled={specs[campo.key] === NO_APLICA}
+                              className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black disabled:bg-gray-100 disabled:text-gray-400"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => actualizarSpec(campo.key, specs[campo.key] === NO_APLICA ? "" : NO_APLICA)}
+                              className={"px-3 py-2 rounded-xl text-xs font-bold border-2 whitespace-nowrap transition-colors " + (specs[campo.key] === NO_APLICA ? "bg-black text-white border-black" : "border-gray-200 text-gray-500 hover:border-black")}
+                            >
+                              No aplica
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-2">Fotos (hasta 6, maximo 8MB cada una)</label>
                 <div className="flex gap-2 flex-wrap">
@@ -187,6 +265,7 @@ export default function MisProductos() {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={subirFoto} className="hidden"/>
               </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-700 block mb-1">Precio unidad</label>
@@ -201,31 +280,9 @@ export default function MisProductos() {
                   <input type="text" value={form.price_box} onChange={(e) => actualizar("price_box", e.target.value)} placeholder="$80.000" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Categoria</label>
-                  <select value={form.category} onChange={(e) => actualizar("category", e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black">
-                    <option value="">Seleccionar...</option>
-                    <option>Indumentaria</option><option>Calzado</option><option>Electronica</option>
-                    <option>Alimentos</option><option>Bebidas</option><option>Ferreteria</option>
-                    <option>Cosmetica</option><option>Hogar</option><option>Deportes</option>
-                    <option>Juguetes</option><option>Tecnologia</option><option>Otros</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Stock</label>
-                  <input type="text" value={form.stock} onChange={(e) => actualizar("stock", e.target.value)} placeholder="500 unidades" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Material</label>
-                  <input type="text" value={form.material} onChange={(e) => actualizar("material", e.target.value)} placeholder="100% algodon" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Talles / Medidas</label>
-                  <input type="text" value={form.measures} onChange={(e) => actualizar("measures", e.target.value)} placeholder="S, M, L, XL" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
-                </div>
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Stock</label>
+                <input type="text" value={form.stock} onChange={(e) => actualizar("stock", e.target.value)} placeholder="500 unidades" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
               </div>
 
               {error && (
@@ -233,7 +290,7 @@ export default function MisProductos() {
               )}
 
               <div className="flex gap-3">
-                <button onClick={() => { setMostrarForm(false); setFotosProducto([]); setError(""); }} disabled={cargando} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl text-sm disabled:opacity-50">
+                <button onClick={() => { setMostrarForm(false); setFotosProducto([]); setSpecs({}); setError(""); }} disabled={cargando} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl text-sm disabled:opacity-50">
                   Cancelar
                 </button>
                 <button onClick={guardarProducto} disabled={cargando || subiendoFoto} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-60 text-sm flex items-center justify-center gap-2">
