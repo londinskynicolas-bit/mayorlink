@@ -32,13 +32,25 @@ const PEDIDO_MINIMO_CANTIDAD = [
 ];
 
 function generarSlug(nombre: string) {
-  return nombre.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 50);
+  const base = nombre.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 50);
+  const sufijo = Math.random().toString(36).slice(2, 6);
+  return base + "-" + sufijo;
+}
+
+function validarWhatsApp(numero: string) {
+  const limpio = numero.replace(/\s|-/g, "");
+  return /^54\d{10,11}$/.test(limpio);
+}
+
+function validarEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export default function RegistroProveedor() {
   const { data: session } = useSession();
   const [paso, setPaso] = useState(1);
   const [cargando, setCargando] = useState(false);
+  const [yaEnviado, setYaEnviado] = useState(false);
   const [error, setError] = useState("");
   const [metodosPago, setMetodosPago] = useState<string[]>([]);
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState("");
@@ -60,38 +72,60 @@ export default function RegistroProveedor() {
   };
 
   const siguiente = () => {
-    if (paso === 1 && (!form.company_name || !provinciaSeleccionada)) {
-      setError("Nombre y provincia son obligatorios");
-      return;
+    if (paso === 1) {
+      if (!form.company_name.trim()) { setError("El nombre de la empresa es obligatorio"); return; }
+      if (!provinciaSeleccionada) { setError("Selecciona tu provincia"); return; }
+    }
+    if (paso === 2) {
+      if (form.whatsapp && !validarWhatsApp(form.whatsapp)) {
+        setError("El WhatsApp debe tener el formato 54 + codigo de area + numero, sin espacios. Ej: 5491112345678");
+        return;
+      }
+      if (!session?.user?.email && !validarEmail(form.email)) {
+        setError("Ingresa un email valido");
+        return;
+      }
     }
     setError("");
     setPaso(paso + 1);
   };
 
   const enviar = async () => {
+    if (yaEnviado || cargando) return;
+    if (form.whatsapp && !validarWhatsApp(form.whatsapp)) {
+      setError("El WhatsApp tiene un formato invalido. Volve al paso 2 y revisalo.");
+      return;
+    }
     setCargando(true);
     setError("");
     const slug = generarSlug(form.company_name);
     const emailFinal = session?.user?.email || form.email;
     const minOrder = [form.min_order_price, form.min_order_qty].filter(Boolean).join(" / ");
+
     const { error: err } = await supabase.from("providers").insert({
       slug,
-      company_name: form.company_name,
-      description: form.description,
+      company_name: form.company_name.trim(),
+      description: form.description.trim(),
       category: form.category.toLowerCase(),
       province: provinciaSeleccionada,
       city: ciudadSeleccionada,
-      whatsapp: form.whatsapp,
-      instagram: form.instagram,
+      whatsapp: form.whatsapp.replace(/\s|-/g, ""),
+      instagram: form.instagram.trim(),
       email: emailFinal,
       min_order: minOrder,
       payment_methods: metodosPago.join(", "),
-      shipping_info: form.shipping_info,
+      shipping_info: form.shipping_info.trim(),
       status: "active",
       profile_score: 60,
     });
-    setCargando(false);
-    if (err) { setError("Hubo un error. Intenta de nuevo."); return; }
+
+    if (err) {
+      setCargando(false);
+      setError("No pudimos guardar tu empresa. Revisa los datos e intenta de nuevo. Si el problema persiste, contactanos.");
+      return;
+    }
+
+    setYaEnviado(true);
     window.location.href = "/gracias?slug=" + slug;
   };
 
@@ -149,10 +183,7 @@ export default function RegistroProveedor() {
                 <label className="text-sm font-bold text-gray-700 block mb-1">Provincia *</label>
                 <select
                   value={provinciaSeleccionada}
-                  onChange={(e) => {
-                    setProvinciaSeleccionada(e.target.value);
-                    setCiudadSeleccionada("");
-                  }}
+                  onChange={(e) => { setProvinciaSeleccionada(e.target.value); setCiudadSeleccionada(""); }}
                   className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black"
                 >
                   <option value="">Seleccionar provincia...</option>
@@ -181,7 +212,7 @@ export default function RegistroProveedor() {
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">WhatsApp</label>
                 <input type="text" value={form.whatsapp} onChange={(e) => actualizar("whatsapp", e.target.value)} placeholder="5491112345678" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black"/>
-                <p className="text-xs text-gray-400 mt-1">Sin espacios, con codigo de pais (54)</p>
+                <p className="text-xs text-gray-400 mt-1">Sin espacios, empieza con 54 + codigo de area + numero</p>
               </div>
               <div>
                 <label className="text-sm font-bold text-gray-700 block mb-1">Instagram</label>
@@ -248,7 +279,7 @@ export default function RegistroProveedor() {
 
           <div className="flex gap-3 mt-6">
             {paso > 1 && (
-              <button onClick={() => setPaso(paso - 1)} className="flex-1 border-2 border-black text-black font-black py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm">
+              <button onClick={() => { setPaso(paso - 1); setError(""); }} disabled={cargando} className="flex-1 border-2 border-black text-black font-black py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm disabled:opacity-50">
                 Atras
               </button>
             )}
@@ -257,8 +288,13 @@ export default function RegistroProveedor() {
                 Continuar
               </button>
             ) : (
-              <button onClick={enviar} disabled={cargando} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 text-sm">
-                {cargando ? "Guardando..." : "Publicar gratis"}
+              <button onClick={enviar} disabled={cargando || yaEnviado} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2">
+                {cargando ? (
+                  <>
+                    <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                    Publicando...
+                  </>
+                ) : "Publicar gratis"}
               </button>
             )}
           </div>
