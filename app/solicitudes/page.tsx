@@ -26,6 +26,10 @@ const CATEGORIAS = [
   { label: "Otros", value: "otros" },
 ];
 
+function validarEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function Solicitudes() {
   const { data: session } = useSession();
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
@@ -33,11 +37,13 @@ export default function Solicitudes() {
   const [categoriaFiltro, setCategoriaFiltro] = useState("todas");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [yaPublicado, setYaPublicado] = useState(false);
   const [publicado, setPublicado] = useState(false);
-  const [proveedoresMatch, setProveedoresMatch] = useState<any[]>([]);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     title: "", description: "", category: "", quantity: "",
     city: "", province: "", budget: "", required_date: "",
+    buyer_name: "", buyer_email: "",
   });
 
   useEffect(() => {
@@ -55,32 +61,46 @@ export default function Solicitudes() {
 
   const actualizar = (campo: string, valor: string) => {
     setForm((prev) => ({ ...prev, [campo]: valor }));
-    if (campo === "category" && valor !== "") {
-      buscarProveedoresMatch(valor.toLowerCase());
-    }
-  };
-
-  const buscarProveedoresMatch = async (cat: string) => {
-    const { data } = await supabase.from("providers").select("*").eq("category", cat).eq("status", "active").order("profile_score", { ascending: false }).limit(3);
-    setProveedoresMatch(data || []);
   };
 
   const publicar = async () => {
-    if (!form.title || !form.category) return;
+    if (yaPublicado || guardando) return;
+    setError("");
+
+    if (!form.title.trim()) { setError("Conta que necesitas comprar"); return; }
+    if (!form.category) { setError("Selecciona una categoria"); return; }
+
+    const emailFinal = session?.user?.email || form.buyer_email;
+    const nombreFinal = session?.user?.name || form.buyer_name;
+
+    if (!session?.user?.email) {
+      if (!nombreFinal.trim()) { setError("Ingresa tu nombre para que los proveedores sepan quien escribe"); return; }
+      if (!validarEmail(form.buyer_email)) { setError("Ingresa un email valido para que los proveedores puedan contactarte"); return; }
+    }
+
     setGuardando(true);
-    await supabase.from("requests").insert({
-      buyer_email: session?.user?.email || "anonimo",
-      buyer_name: session?.user?.name || "Comprador",
-      title: form.title,
-      description: form.description,
+    const { error: err } = await supabase.from("requests").insert({
+      buyer_email: emailFinal,
+      buyer_name: nombreFinal,
+      title: form.title.trim(),
+      description: form.description.trim(),
       category: form.category.toLowerCase(),
-      quantity: form.quantity,
-      city: form.city,
-      province: form.province,
-      budget: form.budget,
-      required_date: form.required_date,
+      quantity: form.quantity.trim(),
+      city: form.city.trim(),
+      province: form.province.trim(),
+      budget: form.budget.trim(),
+      required_date: form.required_date.trim(),
+      status: "active",
     });
+
+    if (err) {
+      setGuardando(false);
+      setError("No pudimos publicar tu solicitud. Intenta de nuevo en un momento.");
+      return;
+    }
+
     setGuardando(false);
+    setYaPublicado(true);
     setPublicado(true);
     cargarSolicitudes();
   };
@@ -105,7 +125,7 @@ export default function Solicitudes() {
             <h1 className="text-2xl md:text-4xl font-black mb-1">Solicitudes de compra</h1>
             <p className="text-gray-400 text-sm">Compradores buscando proveedores ahora mismo</p>
           </div>
-          <button onClick={() => { setMostrarForm(!mostrarForm); setPublicado(false); }} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 md:px-6 py-2 md:py-3 rounded-xl transition-colors text-sm whitespace-nowrap">
+          <button onClick={() => { setMostrarForm(!mostrarForm); setPublicado(false); setError(""); }} className="bg-emerald-500 hover:bg-emerald-400 text-black font-black px-4 md:px-6 py-2 md:py-3 rounded-xl transition-colors text-sm whitespace-nowrap">
             + Publicar
           </button>
         </div>
@@ -150,12 +170,38 @@ export default function Solicitudes() {
                   <input type="text" value={form.budget} onChange={(e) => actualizar("budget", e.target.value)} placeholder="Ej: $50.000" className="w-full border-2 border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black"/>
                 </div>
               </div>
+
+              {!session?.user?.email && (
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+                  <p className="text-sm text-amber-800 font-bold mb-3">Para que los proveedores puedan contactarte, dejanos tus datos:</p>
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 block mb-1">Tu nombre *</label>
+                      <input type="text" value={form.buyer_name} onChange={(e) => actualizar("buyer_name", e.target.value)} placeholder="Ej: Juan Perez" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 block mb-1">Tu email *</label>
+                      <input type="email" value={form.buyer_email} onChange={(e) => actualizar("buyer_email", e.target.value)} placeholder="tu@email.com" className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-black"/>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">{error}</div>
+              )}
+
               <div className="flex gap-3">
-                <button onClick={() => { setMostrarForm(false); setProveedoresMatch([]); }} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors text-sm">
+                <button onClick={() => { setMostrarForm(false); setError(""); }} disabled={guardando} className="flex-1 border-2 border-gray-200 text-gray-600 font-black py-3 rounded-xl hover:border-black transition-colors text-sm disabled:opacity-50">
                   Cancelar
                 </button>
-                <button onClick={publicar} disabled={guardando || !form.title || !form.category} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 text-sm">
-                  {guardando ? "Publicando..." : "Publicar"}
+                <button onClick={publicar} disabled={guardando || yaPublicado} className="flex-1 bg-emerald-500 text-black font-black py-3 rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2">
+                  {guardando ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                      Publicando...
+                    </>
+                  ) : "Publicar"}
                 </button>
               </div>
             </div>
@@ -166,8 +212,13 @@ export default function Solicitudes() {
           <div className="bg-white border-2 border-emerald-200 rounded-2xl p-6 mb-6 text-center">
             <div className="text-3xl mb-2">✅</div>
             <h3 className="text-lg font-black text-black mb-1">Solicitud publicada</h3>
-            <p className="text-gray-500 text-sm mb-4">Los proveedores van a poder ver tu solicitud</p>
-            <button onClick={() => { setMostrarForm(false); setPublicado(false); setForm({ title: "", description: "", category: "", quantity: "", city: "", province: "", budget: "", required_date: "" }); setProveedoresMatch([]); }} className="bg-black text-white font-black px-6 py-2 rounded-xl text-sm">
+            <p className="text-gray-500 text-sm mb-4">Los proveedores van a poder ver tu solicitud y contactarte</p>
+            <button onClick={() => {
+              setMostrarForm(false);
+              setPublicado(false);
+              setYaPublicado(false);
+              setForm({ title: "", description: "", category: "", quantity: "", city: "", province: "", budget: "", required_date: "", buyer_name: "", buyer_email: "" });
+            }} className="bg-black text-white font-black px-6 py-2 rounded-xl text-sm">
               Ver solicitudes
             </button>
           </div>
