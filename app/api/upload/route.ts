@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > MAX_SIZE_MB) {
-      return NextResponse.json({ error: `La imagen pesa ${sizeMB.toFixed(1)}MB. El maximo permitido es ${MAX_SIZE_MB}MB. Intenta con una foto mas liviana.` }, { status: 400 });
+      return NextResponse.json({ error: `La imagen pesa ${sizeMB.toFixed(1)}MB. El maximo permitido es ${MAX_SIZE_MB}MB.` }, { status: 400 });
     }
 
     const tiposValidos = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
@@ -39,34 +39,36 @@ export async function POST(request: NextRequest) {
     uploadFormData.append("api_key", apiKey!);
     uploadFormData.append("timestamp", timestamp.toString());
     uploadFormData.append("signature", signature);
-    uploadFormData.append("transformation", "c_fill,w_1200,h_1200,q_auto,f_auto");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: "POST",
-      body: uploadFormData,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "No pudimos procesar la imagen. Intenta de nuevo en un momento." }, { status: 500 });
+    let res;
+    try {
+      res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: uploadFormData,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     const data = await res.json();
 
-    if (!data.secure_url) {
-      return NextResponse.json({ error: "No pudimos procesar la imagen. Intenta con otra foto." }, { status: 500 });
+    if (!res.ok || !data.secure_url) {
+      console.error("Cloudinary error:", data);
+      return NextResponse.json({ error: data?.error?.message || "No pudimos procesar la imagen. Intenta con otra foto." }, { status: 500 });
     }
 
-    return NextResponse.json({ url: data.secure_url });
+    const urlOptimizada = data.secure_url.replace("/upload/", "/upload/c_fill,w_1200,h_1200,q_auto,f_auto/");
+
+    return NextResponse.json({ url: urlOptimizada });
   } catch (error: any) {
     if (error.name === "AbortError") {
       return NextResponse.json({ error: "La subida tardo demasiado. Verifica tu conexion e intenta de nuevo." }, { status: 408 });
     }
+    console.error("Upload error:", error);
     return NextResponse.json({ error: "Hubo un error al subir la imagen. Intenta de nuevo." }, { status: 500 });
   }
 }

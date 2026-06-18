@@ -20,14 +20,17 @@ export default function Panel() {
   useEffect(() => {
     if (status === "unauthenticated") window.location.href = "/login";
     if (status === "authenticated" && session?.user?.email) {
-      supabase.from("providers").select("*").eq("email", session.user.email).single()
+      // Nunca usamos .single() aca: si por algun motivo hay mas de un registro
+      // con el mismo email, tomamos siempre el mas reciente en vez de romper.
+      supabase.from("providers").select("*").eq("email", session.user.email).order("created_at", { ascending: false }).limit(1)
         .then(({ data }) => {
-          setProveedor(data);
+          const prov = data && data.length > 0 ? data[0] : null;
+          setProveedor(prov);
           setCargando(false);
-          if (data) {
-            supabase.from("products").select("id").eq("provider_slug", data.slug)
+          if (prov) {
+            supabase.from("products").select("id").eq("provider_slug", prov.slug)
               .then(({ data: prods }) => setProductos(prods || []));
-            supabase.from("reviews").select("rating").eq("provider_slug", data.slug)
+            supabase.from("reviews").select("rating").eq("provider_slug", prov.slug)
               .then(({ data: revs }) => setResenas(revs || []));
           }
         });
