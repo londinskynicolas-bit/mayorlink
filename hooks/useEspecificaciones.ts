@@ -1,201 +1,192 @@
 export interface CampoEspec {
-    key: string;
-    label: string;
-    tipo: "texto" | "select" | "booleano";
-    placeholder?: string;
-    opciones?: string[];
-  }
-  
-  export const NO_APLICA = "No aplica";
-  
-  export const ESPECIFICACIONES_POR_CATEGORIA: { [key: string]: CampoEspec[] } = {
-    "Indumentaria": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: S, M, L, XL, XXL" },
-      { key: "material", label: "Material / Composicion", tipo: "texto", placeholder: "Ej: 100% algodon" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco, azul" },
-      { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino", "Nina", "Bebe"] },
-      { key: "temporada", label: "Temporada", tipo: "select", opciones: ["Verano", "Invierno", "Entretiempo", "Todo el ano"] },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-      { key: "lavado_maquina", label: "Lavado a maquina", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "cuello", label: "Tipo de cuello / corte", tipo: "texto", placeholder: "Ej: Redondo, V, polo" },
-      { key: "estampado", label: "Estampado / Liso", tipo: "select", opciones: ["Liso", "Estampado", "Bordado", "Ambos disponibles"] },
-    ],
-    "Calzado": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: 36 al 44" },
-      { key: "material_exterior", label: "Material exterior", tipo: "texto", placeholder: "Ej: Cuero ecologico, lona" },
-      { key: "material_interior", label: "Material interior / forro", tipo: "texto", placeholder: "Ej: Tela, cuero" },
-      { key: "tipo_suela", label: "Tipo de suela", tipo: "texto", placeholder: "Ej: Goma vulcanizada, PVC" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco, marron" },
-      { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino/a", "Bebe"] },
-      { key: "cierre", label: "Tipo de cierre", tipo: "select", opciones: ["Cordones", "Velcro", "Elastico", "Sin cierre", "Combinado"] },
-      { key: "altura_cana", label: "Altura de cana", tipo: "select", opciones: ["Bajo", "Medio", "Alto", "No aplica"] },
-      { key: "uso", label: "Uso recomendado", tipo: "select", opciones: ["Casual", "Deportivo", "Trabajo / Seguridad", "Formal", "Playa / Verano"] },
-    ],
-    "Hogar": [
-      { key: "alto", label: "Alto (cm)", tipo: "texto", placeholder: "Ej: 80" },
-      { key: "ancho", label: "Ancho (cm)", tipo: "texto", placeholder: "Ej: 120" },
-      { key: "profundo", label: "Profundidad (cm)", tipo: "texto", placeholder: "Ej: 45" },
-      { key: "peso", label: "Peso aproximado (kg)", tipo: "texto", placeholder: "Ej: 12" },
-      { key: "material", label: "Material principal", tipo: "texto", placeholder: "Ej: Madera MDF, metal" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Roble, blanco, negro" },
-      { key: "armado", label: "Requiere armado", tipo: "select", opciones: ["Viene armado", "Requiere armado", "Armado opcional con costo extra"] },
-      { key: "instrucciones", label: "Incluye instrucciones de armado", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 6 meses por defecto de fabrica" },
-      { key: "carga_maxima", label: "Carga maxima (kg)", tipo: "texto", placeholder: "Ej: 80kg" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Electronica": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Samsung, LG, sin marca" },
-      { key: "modelo", label: "Modelo", tipo: "texto", placeholder: "Ej: Galaxy A54" },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 12 meses oficial" },
-      { key: "voltaje", label: "Voltaje", tipo: "select", opciones: ["110V", "220V", "Doble voltaje 110/220V", "No aplica"] },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco, gris" },
-      { key: "conectividad", label: "Conectividad", tipo: "texto", placeholder: "Ej: WiFi, Bluetooth 5.0, USB-C" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-      { key: "incluye_accesorios", label: "Incluye accesorios", tipo: "texto", placeholder: "Ej: Cable USB, manual, cargador" },
-      { key: "certificacion", label: "Certificacion", tipo: "select", opciones: ["Con certificacion ENACOM", "Sin certificacion", "No aplica"] },
-    ],
-    "Tecnologia": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: HP, Lenovo, sin marca" },
-      { key: "modelo", label: "Modelo", tipo: "texto", placeholder: "Ej: Pavilion 15" },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 12 meses" },
-      { key: "procesador", label: "Procesador", tipo: "texto", placeholder: "Ej: Intel Core i5" },
-      { key: "memoria_ram", label: "Memoria RAM", tipo: "texto", placeholder: "Ej: 8GB" },
-      { key: "almacenamiento", label: "Almacenamiento", tipo: "texto", placeholder: "Ej: 256GB SSD" },
-      { key: "pantalla", label: "Pantalla", tipo: "texto", placeholder: "Ej: 15.6 pulgadas Full HD" },
-      { key: "voltaje", label: "Voltaje", tipo: "select", opciones: ["110V", "220V", "Doble voltaje 110/220V", "No aplica"] },
-      { key: "color", label: "Color", tipo: "texto", placeholder: "Ej: Gris espacial" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Alimentos": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "peso_unidad", label: "Peso o volumen por unidad", tipo: "texto", placeholder: "Ej: 500g, 1L, 250ml" },
-      { key: "unidades_caja", label: "Unidades por caja / pack", tipo: "texto", placeholder: "Ej: 12 unidades por caja" },
-      { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 6 meses" },
-      { key: "conservacion", label: "Conservacion", tipo: "select", opciones: ["Ambiente", "Refrigerado (2-8°C)", "Congelado (-18°C)", "Fresco"] },
-      { key: "apto_celiacos", label: "Apto para celiacos (sin TACC)", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "apto_vegano", label: "Apto vegano / vegetariano", tipo: "select", opciones: ["Vegano", "Vegetariano", "No", "No aplica"] },
-      { key: "sin_azucar", label: "Sin azucar / light", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "organico", label: "Producto organico / agroecologico", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Bebidas": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "volumen_unidad", label: "Volumen por unidad", tipo: "texto", placeholder: "Ej: 1L, 500ml, 355ml" },
-      { key: "unidades_caja", label: "Unidades por caja", tipo: "texto", placeholder: "Ej: 12 latas por caja" },
-      { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 12 meses" },
-      { key: "conservacion", label: "Conservacion", tipo: "select", opciones: ["Ambiente", "Refrigerado", "Congelado"] },
-      { key: "con_alcohol", label: "Con alcohol", tipo: "select", opciones: ["Si (especificar graduacion)", "No", "No aplica"] },
-      { key: "sin_azucar", label: "Sin azucar / light / zero", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "organica", label: "Organica / natural", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Ferreteria": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Stanley, sin marca" },
-      { key: "medidas", label: "Medidas / Dimensiones", tipo: "texto", placeholder: "Ej: 30cm x 5mm" },
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Acero inoxidable, aluminio" },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 3 meses" },
-      { key: "uso", label: "Uso", tipo: "texto", placeholder: "Ej: Construccion en seco, plomeria" },
-      { key: "resistencia", label: "Resistencia / Capacidad", tipo: "texto", placeholder: "Ej: Soporta hasta 200kg" },
-      { key: "acabado", label: "Acabado / Recubrimiento", tipo: "texto", placeholder: "Ej: Galvanizado, pintado" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Cosmetica": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "volumen", label: "Volumen o contenido", tipo: "texto", placeholder: "Ej: 250ml, 50g" },
-      { key: "tipo_producto", label: "Tipo de producto", tipo: "texto", placeholder: "Ej: Crema hidratante, serum, shampoo" },
-      { key: "tipo_piel", label: "Tipo de piel recomendado", tipo: "select", opciones: ["Todo tipo de piel", "Piel grasa", "Piel seca", "Piel mixta", "Piel sensible", "No aplica"] },
-      { key: "fragancia", label: "Fragancia", tipo: "texto", placeholder: "Ej: Sin fragancia, floral, frutal" },
-      { key: "vencimiento", label: "Vencimiento desde apertura", tipo: "texto", placeholder: "Ej: 12 meses desde apertura" },
-      { key: "libre_parabenos", label: "Libre de parabenos", tipo: "select", opciones: ["Si", "No", "No especificado"] },
-      { key: "cruelty_free", label: "Cruelty free / No testado en animales", tipo: "select", opciones: ["Si", "No", "No especificado"] },
-      { key: "vegano", label: "Formula vegana", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Deportes": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "deporte", label: "Deporte o actividad", tipo: "texto", placeholder: "Ej: Futbol, running, natacion" },
-      { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: S, M, L, XL o tallas 36-44" },
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Poliester 100%, neoprene" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, azul, rojo" },
-      { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino/a"] },
-      { key: "resistencia_agua", label: "Resistencia al agua", tipo: "select", opciones: ["Impermeable", "Resistente al agua", "No resistente", "No aplica"] },
-      { key: "uso_interior_exterior", label: "Uso", tipo: "select", opciones: ["Interior", "Exterior", "Ambos"] },
-    ],
-    "Juguetes": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "edad_recomendada", label: "Edad recomendada", tipo: "texto", placeholder: "Ej: +3 anos, 0-12 meses" },
-      { key: "material", label: "Material principal", tipo: "texto", placeholder: "Ej: Plastico ABS libre de BPA" },
-      { key: "genero", label: "Dirigido a", tipo: "select", opciones: ["Nino", "Nina", "Unisex"] },
-      { key: "pilas", label: "Requiere pilas / bateria", tipo: "select", opciones: ["Si, incluidas", "Si, no incluidas", "No requiere", "Recargable USB"] },
-      { key: "certificacion", label: "Certificacion de seguridad", tipo: "select", opciones: ["Con certificacion", "Sin certificacion", "No especificado"] },
-      { key: "dimensiones", label: "Dimensiones aproximadas", tipo: "texto", placeholder: "Ej: 30 x 20 x 10 cm" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Textil": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "medidas", label: "Medidas", tipo: "texto", placeholder: "Ej: 2 x 2 metros, 140cm de ancho" },
-      { key: "material", label: "Material / Composicion", tipo: "texto", placeholder: "Ej: 100% algodon, poliester 50/50" },
-      { key: "gramaje", label: "Gramaje (gr/m2)", tipo: "texto", placeholder: "Ej: 180 gr/m2" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Blanco, crudo, negro" },
-      { key: "estampado", label: "Tipo", tipo: "select", opciones: ["Liso", "Estampado", "A rayas", "A cuadros", "Bordado"] },
-      { key: "lavado", label: "Instrucciones de lavado", tipo: "texto", placeholder: "Ej: Lavar a 30 grados, no centrifugar" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Packaging": [
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Carton corrugado, kraft" },
-      { key: "medidas", label: "Medidas internas (cm)", tipo: "texto", placeholder: "Ej: 30 x 20 x 10" },
-      { key: "resistencia", label: "Resistencia / Carga maxima", tipo: "texto", placeholder: "Ej: Hasta 5kg" },
-      { key: "color", label: "Color", tipo: "texto", placeholder: "Ej: Marron natural, blanco" },
-      { key: "personalizable", label: "Personalizable con logo", tipo: "select", opciones: ["Si, con costo adicional", "Si, incluido", "No"] },
-      { key: "unidades_pack", label: "Unidades por pack", tipo: "texto", placeholder: "Ej: 25 cajas por bulto" },
-      { key: "ecologico", label: "Material ecologico / reciclado", tipo: "select", opciones: ["Si", "No", "No especificado"] },
-    ],
-    "Automotriz": [
-      { key: "marca_compatible", label: "Marca de vehiculo compatible", tipo: "texto", placeholder: "Ej: Volkswagen, Ford, universal" },
-      { key: "modelo_compatible", label: "Modelo compatible", tipo: "texto", placeholder: "Ej: Gol G5 2010-2015" },
-      { key: "tipo_pieza", label: "Tipo de pieza", tipo: "texto", placeholder: "Ej: Filtro de aceite, amortiguador" },
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Aluminio, acero, goma" },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 6 meses" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Original", "Alternativo nacional", "Alternativo importado"] },
-      { key: "numero_oem", label: "Numero OEM / Referencia", tipo: "texto", placeholder: "Ej: 06J115403 (opcional)" },
-    ],
-    "Agro": [
-      { key: "tipo_producto", label: "Tipo de producto", tipo: "texto", placeholder: "Ej: Semilla, fertilizante, herramienta" },
-      { key: "presentacion", label: "Presentacion", tipo: "texto", placeholder: "Ej: Bolsa 25kg, bidon 20L" },
-      { key: "uso", label: "Uso recomendado", tipo: "texto", placeholder: "Ej: Cultivo de soja, frutales" },
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca comercial" },
-      { key: "certificacion", label: "Certificacion / Habilitacion", tipo: "texto", placeholder: "Ej: SENASA, organico certificado" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Salud": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca comercial" },
-      { key: "presentacion", label: "Presentacion", tipo: "texto", placeholder: "Ej: Caja x 30 comprimidos, frasco 100ml" },
-      { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 12 meses" },
-      { key: "requiere_receta", label: "Requiere receta medica", tipo: "select", opciones: ["Si", "No", "No aplica"] },
-      { key: "habilitacion", label: "Habilitacion ANMAT / INAME", tipo: "select", opciones: ["Con habilitacion", "Sin habilitacion", "En tramite"] },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Libreria": [
-      { key: "marca", label: "Marca / Fabricante", tipo: "texto", placeholder: "Ej: Faber Castell, sin marca" },
-      { key: "medidas", label: "Medidas", tipo: "texto", placeholder: "Ej: A4, A5, 21x29cm" },
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Papel obra 75gr, carton" },
-      { key: "cantidad_unidad", label: "Cantidad por unidad", tipo: "texto", placeholder: "Ej: Block x 50 hojas, caja x 12 lapices" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Azul, negro, multicolor" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-    "Otros": [
-      { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
-      { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Plastico, metal, madera" },
-      { key: "medidas", label: "Medidas / Dimensiones", tipo: "texto", placeholder: "Ej: 30 x 20 x 10 cm" },
-      { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco" },
-      { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 3 meses" },
-      { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
-    ],
-  };
-  
-  export function obtenerCamposPorCategoria(categoria: string): CampoEspec[] {
-    return ESPECIFICACIONES_POR_CATEGORIA[categoria] || ESPECIFICACIONES_POR_CATEGORIA["Otros"];
-  }
+  key: string;
+  label: string;
+  tipo: "texto" | "select";
+  placeholder?: string;
+  opciones?: string[];
+}
+
+export const NO_APLICA = "No aplica";
+
+export const ESPECIFICACIONES_POR_CATEGORIA: { [key: string]: CampoEspec[] } = {
+  "Indumentaria": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: S, M, L, XL, XXL" },
+    { key: "material", label: "Material / Composicion", tipo: "texto", placeholder: "Ej: 100% algodon" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco, azul" },
+    { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino", "Nina", "Bebe"] },
+    { key: "temporada", label: "Temporada", tipo: "select", opciones: ["Verano", "Invierno", "Entretiempo", "Todo el ano"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
+    { key: "lavado_maquina", label: "Lavado a maquina", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "estampado", label: "Estampado / Liso", tipo: "select", opciones: ["Liso", "Estampado", "Bordado", "Ambos disponibles"] }
+  ],
+  "Calzado": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: 36 al 44" },
+    { key: "material_exterior", label: "Material exterior", tipo: "texto", placeholder: "Ej: Cuero ecologico, lona" },
+    { key: "material_interior", label: "Material interior", tipo: "texto", placeholder: "Ej: Tela, cuero" },
+    { key: "tipo_suela", label: "Tipo de suela", tipo: "texto", placeholder: "Ej: Goma vulcanizada, PVC" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco, marron" },
+    { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino/a", "Bebe"] },
+    { key: "cierre", label: "Tipo de cierre", tipo: "select", opciones: ["Cordones", "Velcro", "Elastico", "Sin cierre", "Combinado"] },
+    { key: "uso", label: "Uso recomendado", tipo: "select", opciones: ["Casual", "Deportivo", "Trabajo / Seguridad", "Formal", "Playa / Verano"] }
+  ],
+  "Hogar": [
+    { key: "alto", label: "Alto (cm)", tipo: "texto", placeholder: "Ej: 80" },
+    { key: "ancho", label: "Ancho (cm)", tipo: "texto", placeholder: "Ej: 120" },
+    { key: "profundo", label: "Profundidad (cm)", tipo: "texto", placeholder: "Ej: 45" },
+    { key: "peso", label: "Peso aproximado (kg)", tipo: "texto", placeholder: "Ej: 12" },
+    { key: "material", label: "Material principal", tipo: "texto", placeholder: "Ej: Madera MDF, metal" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Roble, blanco, negro" },
+    { key: "armado", label: "Requiere armado", tipo: "select", opciones: ["Viene armado", "Requiere armado", "Armado opcional con costo extra"] },
+    { key: "instrucciones", label: "Incluye instrucciones", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 6 meses por defecto de fabrica" },
+    { key: "carga_maxima", label: "Carga maxima (kg)", tipo: "texto", placeholder: "Ej: 80kg" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Electronica": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Samsung, LG" },
+    { key: "modelo", label: "Modelo", tipo: "texto", placeholder: "Ej: Galaxy A54" },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 12 meses oficial" },
+    { key: "voltaje", label: "Voltaje", tipo: "select", opciones: ["110V", "220V", "Doble voltaje 110/220V", "No aplica"] },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco" },
+    { key: "conectividad", label: "Conectividad", tipo: "texto", placeholder: "Ej: WiFi, Bluetooth 5.0" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] },
+    { key: "incluye_accesorios", label: "Incluye accesorios", tipo: "texto", placeholder: "Ej: Cable USB, manual" },
+    { key: "certificacion", label: "Certificacion", tipo: "select", opciones: ["Con certificacion ENACOM", "Sin certificacion", "No aplica"] }
+  ],
+  "Tecnologia": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: HP, Lenovo" },
+    { key: "modelo", label: "Modelo", tipo: "texto", placeholder: "Ej: Pavilion 15" },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 12 meses" },
+    { key: "procesador", label: "Procesador", tipo: "texto", placeholder: "Ej: Intel Core i5" },
+    { key: "memoria_ram", label: "Memoria RAM", tipo: "texto", placeholder: "Ej: 8GB" },
+    { key: "almacenamiento", label: "Almacenamiento", tipo: "texto", placeholder: "Ej: 256GB SSD" },
+    { key: "pantalla", label: "Pantalla", tipo: "texto", placeholder: "Ej: 15.6 pulgadas Full HD" },
+    { key: "voltaje", label: "Voltaje", tipo: "select", opciones: ["110V", "220V", "Doble voltaje", "No aplica"] },
+    { key: "color", label: "Color", tipo: "texto", placeholder: "Ej: Gris espacial" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Alimentos": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "peso_unidad", label: "Peso o volumen por unidad", tipo: "texto", placeholder: "Ej: 500g, 1L" },
+    { key: "unidades_caja", label: "Unidades por caja", tipo: "texto", placeholder: "Ej: 12 unidades por caja" },
+    { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 6 meses" },
+    { key: "conservacion", label: "Conservacion", tipo: "select", opciones: ["Ambiente", "Refrigerado", "Congelado", "Fresco"] },
+    { key: "apto_celiacos", label: "Apto para celiacos", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "apto_vegano", label: "Apto vegano / vegetariano", tipo: "select", opciones: ["Vegano", "Vegetariano", "No", "No aplica"] },
+    { key: "sin_azucar", label: "Sin azucar / light", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Bebidas": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "volumen_unidad", label: "Volumen por unidad", tipo: "texto", placeholder: "Ej: 1L, 500ml" },
+    { key: "unidades_caja", label: "Unidades por caja", tipo: "texto", placeholder: "Ej: 12 por caja" },
+    { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 12 meses" },
+    { key: "conservacion", label: "Conservacion", tipo: "select", opciones: ["Ambiente", "Refrigerado", "Congelado"] },
+    { key: "con_alcohol", label: "Con alcohol", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "sin_azucar", label: "Sin azucar / light / zero", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Ferreteria": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Stanley, sin marca" },
+    { key: "medidas", label: "Medidas / Dimensiones", tipo: "texto", placeholder: "Ej: 30cm x 5mm" },
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Acero inoxidable" },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 3 meses" },
+    { key: "uso", label: "Uso", tipo: "texto", placeholder: "Ej: Construccion, plomeria" },
+    { key: "resistencia", label: "Resistencia / Capacidad", tipo: "texto", placeholder: "Ej: Hasta 200kg" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Cosmetica": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "volumen", label: "Volumen o contenido", tipo: "texto", placeholder: "Ej: 250ml, 50g" },
+    { key: "tipo_producto", label: "Tipo de producto", tipo: "texto", placeholder: "Ej: Crema hidratante, shampoo" },
+    { key: "tipo_piel", label: "Tipo de piel", tipo: "select", opciones: ["Todo tipo de piel", "Piel grasa", "Piel seca", "Piel mixta", "Piel sensible", "No aplica"] },
+    { key: "fragancia", label: "Fragancia", tipo: "texto", placeholder: "Ej: Sin fragancia, floral" },
+    { key: "vencimiento", label: "Vencimiento desde apertura", tipo: "texto", placeholder: "Ej: 12 meses" },
+    { key: "libre_parabenos", label: "Libre de parabenos", tipo: "select", opciones: ["Si", "No", "No especificado"] },
+    { key: "cruelty_free", label: "Cruelty free", tipo: "select", opciones: ["Si", "No", "No especificado"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Deportes": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "deporte", label: "Deporte o actividad", tipo: "texto", placeholder: "Ej: Futbol, running" },
+    { key: "talles", label: "Talles disponibles", tipo: "texto", placeholder: "Ej: S, M, L, XL" },
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Poliester, neoprene" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, azul" },
+    { key: "genero", label: "Genero", tipo: "select", opciones: ["Hombre", "Mujer", "Unisex", "Nino/a"] },
+    { key: "resistencia_agua", label: "Resistencia al agua", tipo: "select", opciones: ["Impermeable", "Resistente al agua", "No resistente", "No aplica"] },
+    { key: "uso", label: "Uso", tipo: "select", opciones: ["Interior", "Exterior", "Ambos"] }
+  ],
+  "Juguetes": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "edad_recomendada", label: "Edad recomendada", tipo: "texto", placeholder: "Ej: +3 anos, 0-12 meses" },
+    { key: "material", label: "Material principal", tipo: "texto", placeholder: "Ej: Plastico ABS libre de BPA" },
+    { key: "genero", label: "Dirigido a", tipo: "select", opciones: ["Nino", "Nina", "Unisex"] },
+    { key: "pilas", label: "Requiere pilas / bateria", tipo: "select", opciones: ["Si incluidas", "Si no incluidas", "No requiere", "Recargable USB"] },
+    { key: "dimensiones", label: "Dimensiones aproximadas", tipo: "texto", placeholder: "Ej: 30 x 20 x 10 cm" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Textil": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "medidas", label: "Medidas", tipo: "texto", placeholder: "Ej: 2 x 2 metros, 140cm de ancho" },
+    { key: "material", label: "Material / Composicion", tipo: "texto", placeholder: "Ej: 100% algodon" },
+    { key: "gramaje", label: "Gramaje (gr/m2)", tipo: "texto", placeholder: "Ej: 180 gr/m2" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Blanco, crudo, negro" },
+    { key: "estampado", label: "Tipo", tipo: "select", opciones: ["Liso", "Estampado", "A rayas", "A cuadros", "Bordado"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Packaging": [
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Carton corrugado, kraft" },
+    { key: "medidas", label: "Medidas internas (cm)", tipo: "texto", placeholder: "Ej: 30 x 20 x 10" },
+    { key: "resistencia", label: "Carga maxima", tipo: "texto", placeholder: "Ej: Hasta 5kg" },
+    { key: "color", label: "Color", tipo: "texto", placeholder: "Ej: Marron natural, blanco" },
+    { key: "personalizable", label: "Personalizable con logo", tipo: "select", opciones: ["Si con costo adicional", "Si incluido", "No"] },
+    { key: "unidades_pack", label: "Unidades por pack", tipo: "texto", placeholder: "Ej: 25 cajas por bulto" },
+    { key: "ecologico", label: "Material ecologico / reciclado", tipo: "select", opciones: ["Si", "No", "No especificado"] }
+  ],
+  "Automotriz": [
+    { key: "marca_compatible", label: "Marca de vehiculo compatible", tipo: "texto", placeholder: "Ej: Volkswagen, Ford, universal" },
+    { key: "modelo_compatible", label: "Modelo compatible", tipo: "texto", placeholder: "Ej: Gol G5 2010-2015" },
+    { key: "tipo_pieza", label: "Tipo de pieza", tipo: "texto", placeholder: "Ej: Filtro de aceite, amortiguador" },
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Aluminio, acero, goma" },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 6 meses" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Original", "Alternativo nacional", "Alternativo importado"] }
+  ],
+  "Agro": [
+    { key: "tipo_producto", label: "Tipo de producto", tipo: "texto", placeholder: "Ej: Semilla, fertilizante, herramienta" },
+    { key: "presentacion", label: "Presentacion", tipo: "texto", placeholder: "Ej: Bolsa 25kg, bidon 20L" },
+    { key: "uso", label: "Uso recomendado", tipo: "texto", placeholder: "Ej: Cultivo de soja, frutales" },
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca comercial" },
+    { key: "certificacion", label: "Certificacion", tipo: "texto", placeholder: "Ej: SENASA, organico certificado" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Salud": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca comercial" },
+    { key: "presentacion", label: "Presentacion", tipo: "texto", placeholder: "Ej: Caja x 30 comprimidos" },
+    { key: "vencimiento_minimo", label: "Vencimiento minimo al despachar", tipo: "texto", placeholder: "Ej: 12 meses" },
+    { key: "requiere_receta", label: "Requiere receta medica", tipo: "select", opciones: ["Si", "No", "No aplica"] },
+    { key: "habilitacion", label: "Habilitacion ANMAT", tipo: "select", opciones: ["Con habilitacion", "Sin habilitacion", "En tramite"] },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Libreria": [
+    { key: "marca", label: "Marca / Fabricante", tipo: "texto", placeholder: "Ej: Faber Castell, sin marca" },
+    { key: "medidas", label: "Medidas", tipo: "texto", placeholder: "Ej: A4, A5, 21x29cm" },
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Papel obra 75gr, carton" },
+    { key: "cantidad_unidad", label: "Cantidad por unidad", tipo: "texto", placeholder: "Ej: Block x 50 hojas" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Azul, negro, multicolor" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ],
+  "Otros": [
+    { key: "marca", label: "Marca", tipo: "texto", placeholder: "Ej: Sin marca / Marca propia" },
+    { key: "material", label: "Material", tipo: "texto", placeholder: "Ej: Plastico, metal, madera" },
+    { key: "medidas", label: "Medidas / Dimensiones", tipo: "texto", placeholder: "Ej: 30 x 20 x 10 cm" },
+    { key: "color", label: "Colores disponibles", tipo: "texto", placeholder: "Ej: Negro, blanco" },
+    { key: "garantia", label: "Garantia", tipo: "texto", placeholder: "Ej: 3 meses" },
+    { key: "origen", label: "Origen", tipo: "select", opciones: ["Nacional", "Importado", "No especificado"] }
+  ]
+};
+
+export function obtenerCamposPorCategoria(categoria: string): CampoEspec[] {
+  return ESPECIFICACIONES_POR_CATEGORIA[categoria] || ESPECIFICACIONES_POR_CATEGORIA["Otros"];
+}
